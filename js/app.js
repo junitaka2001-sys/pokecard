@@ -19,11 +19,23 @@ function initApp() {
     window.qrManager.checkUrlParamsOnLoad();
   }
 
-  // PWA Service Worker 登録
+  // PWA Service Worker 登録 & 強制更新チェック
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(err => {
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        // 起動時に毎回バックグラウンド更新をチェック
+        reg.update().catch(() => {});
+      }).catch(err => {
         console.log('SW registration error:', err);
+      });
+
+      // 新しいバージョンが適用されたら自動で画面をリフレッシュ
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
       });
     });
   }
@@ -452,6 +464,22 @@ function setupAdminControls() {
       });
       renderApp();
       alert('スタンプを10個に設定しました！');
+    });
+  }
+
+  // アプリ手動更新（キャッシュパージ & 再読み込み）
+  const updateAppBtn = document.getElementById('admin-update-app-btn');
+  if (updateAppBtn) {
+    updateAppBtn.addEventListener('click', async () => {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (let r of regs) { await r.update(); }
+      }
+      window.location.reload(true);
     });
   }
 
