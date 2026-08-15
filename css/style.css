@@ -416,16 +416,17 @@ html, body {
   overflow: hidden;
   background: linear-gradient(135deg, #FFFFFF 0%, #FAF8F2 100%);
   animation: ticketPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, max-height 0.55s ease, margin 0.55s ease, padding 0.55s ease;
 }
 
 .ticket-card.using-out {
-  transform: scale(0.85) translateY(-10px);
+  transform: scale(0.8) translateY(-12px);
   opacity: 0;
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  margin-bottom: 0;
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  pointer-events: none;
 }
 
 @keyframes ticketPop {
@@ -503,34 +504,41 @@ html, body {
   filter: brightness(0.88);
 }
 
-/* 全ボタン共通のタップ・押下フィードバック */
-button, [role="button"] {
+/* 全ボタン共通のタップ・押下フィードバック (CSS :active & JS .is-touched) */
+button, [role="button"], .next-reward-card {
   touch-action: manipulation;
   transition: transform 0.12s cubic-bezier(0.2, 0, 0.2, 1), filter 0.12s ease, box-shadow 0.12s ease;
 }
 
-button:active, [role="button"]:active {
-  transform: scale(0.93) !important;
-  filter: brightness(0.90) !important;
-}
-
-.reward-exchange-btn.can-exchange:active {
-  transform: scale(0.90) translateY(1px) !important;
+button:active, [role="button"]:active,
+button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
+  transform: scale(0.92) !important;
   filter: brightness(0.88) !important;
 }
 
-.admin-btn:active {
-  transform: scale(0.92) !important;
+.ticket-use-btn:active, .ticket-use-btn.is-touched {
+  transform: scale(0.88) translateY(1px) !important;
+  box-shadow: 0 1px 3px rgba(230, 57, 70, 0.4) !important;
+  filter: brightness(0.85) !important;
+}
+
+.reward-exchange-btn.can-exchange:active, .reward-exchange-btn.can-exchange.is-touched {
+  transform: scale(0.88) translateY(1px) !important;
+  filter: brightness(0.85) !important;
+}
+
+.admin-btn:active, .admin-btn.is-touched {
+  transform: scale(0.90) !important;
   background-color: #EAE3D5 !important;
 }
 
-.btn-primary:active {
-  transform: scale(0.94) translateY(1px) !important;
-  filter: brightness(0.9) !important;
+.btn-primary:active, .btn-primary.is-touched {
+  transform: scale(0.92) translateY(1px) !important;
+  filter: brightness(0.88) !important;
 }
 
-.btn-secondary:active {
-  transform: scale(0.94) !important;
+.btn-secondary:active, .btn-secondary.is-touched {
+  transform: scale(0.92) !important;
   background-color: #E2DDD5 !important;
 }
 

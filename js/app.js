@@ -3,6 +3,8 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // iOS Safari で :active 擬似クラスを有効化する必須トリガー
+  document.addEventListener('touchstart', () => {}, { passive: true });
   initApp();
 });
 
@@ -139,6 +141,25 @@ function setupEventListeners() {
       soundBtn.style.opacity = window.soundEffects.muted ? '0.4' : '1';
     });
   }
+
+  // iOS Safari用 タッチフィードバック（確実に沈み込みを発生させる）
+  document.addEventListener('touchstart', (e) => {
+    const btn = e.target.closest('button, [role="button"], .next-reward-card');
+    if (btn) {
+      btn.classList.add('is-touched');
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    const btn = e.target.closest('button, [role="button"], .next-reward-card');
+    if (btn) {
+      setTimeout(() => btn.classList.remove('is-touched'), 120);
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchcancel', (e) => {
+    document.querySelectorAll('.is-touched').forEach(el => el.classList.remove('is-touched'));
+  }, { passive: true });
 
   // テスト用・管理者メニュー機能
   setupAdminControls();
@@ -436,7 +457,7 @@ function executeTicketUse() {
     } else {
       alert(res.message);
     }
-  }, 250);
+  }, 480);
 
   selectedTicketForUse = null;
 }
