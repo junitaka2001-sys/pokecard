@@ -908,19 +908,57 @@ html, body {
 }
 
 /* カメラQRスキャナー用 */
-#qr-reader-container {
+.qr-reader-container {
   width: 100%;
   max-width: 320px;
+  height: 240px;
   margin: 0 auto;
   border-radius: var(--radius-md);
   overflow: hidden;
   background: #000;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #qr-video {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
+}
+
+.qr-scan-guide-box {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.qr-scan-guide-box.detected {
+  border-color: #2ECC71;
+  box-shadow: 0 0 16px #2ECC71, 0 0 0 9999px rgba(0, 0, 0, 0.4);
+}
+
+.qr-laser-line {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #E63946, transparent);
+  box-shadow: 0 0 6px #E63946;
+  position: absolute;
+  top: 0;
+  animation: laserScan 2s linear infinite;
+}
+
+@keyframes laserScan {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
 }
 
 .qr-scan-guide {

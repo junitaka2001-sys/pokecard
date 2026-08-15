@@ -59,6 +59,16 @@ function setupEventListeners() {
     });
   }
 
+  // QR画像ファイル入力からの読み取り
+  const qrFileInput = document.getElementById('qr-file-input');
+  if (qrFileInput) {
+    qrFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0] && window.qrManager) {
+        window.qrManager.scanImageFile(e.target.files[0]);
+      }
+    });
+  }
+
   // ポイント履歴リンク
   const historyLink = document.getElementById('history-link-btn');
   if (historyLink) {

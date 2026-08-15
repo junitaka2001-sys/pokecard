@@ -209,10 +209,23 @@
         <div class="modal-title">📷 QRコード読み取り</div>
         <button class="modal-close-btn modal-close-trigger" aria-label="閉じる">✕</button>
       </div>
-      <div id="qr-reader-container">
+      <div id="qr-reader-container" class="qr-reader-container">
         <video id="qr-video" playsinline></video>
+        <!-- スキャン枠 & レーザーライン -->
+        <div id="qr-scan-guide-box" class="qr-scan-guide-box">
+          <div class="qr-laser-line"></div>
+        </div>
       </div>
       <p class="qr-scan-guide">カメラで当選用QRコードをかざしてください</p>
+      
+      <!-- 画像ファイルから読み取りボタン -->
+      <div style="text-align: center; margin-top: 10px;">
+        <label for="qr-file-input" style="display: inline-block; font-size: 12px; color: #A67E44; background: #FAF5EB; border: 1px dashed #DFCDB2; padding: 6px 14px; border-radius: 20px; cursor: pointer;">
+          🖼️ QR画像・スクショから読み取る
+        </label>
+        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+      </div>
+
       <div id="qr-camera-error" style="display: none; text-align:center; padding: 10px; color: #8C827A; font-size: 12px;">
         カメラにアクセスできませんでした。<br>iPhoneの標準カメラアプリでQRを読み込むと自動でスタンプが付与されます！
       </div>
@@ -242,6 +255,7 @@
   </div>
 
   <!-- Scripts -->
+  <script src="js/jsQR.min.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/stamp.js"></script>
   <script src="js/qr.js"></script>

@@ -7,6 +7,7 @@ const ASSETS_TO_CACHE = [
   './js/storage.js',
   './js/stamp.js',
   './js/qr.js',
+  './js/jsQR.min.js',
   './manifest.json',
   './images/icons/app-icon.svg',
   './images/icons/stamp-red.svg',
