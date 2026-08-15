@@ -1,0 +1,18 @@
+{
+  "name": "POKECARD - はるか専用デジタルポイントカード",
+  "short_name": "POKECARD",
+  "description": "ポケモンカード当選スタンプカード",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F7F5EE",
+  "theme_color": "#F7F5EE",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "images/icons/app-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

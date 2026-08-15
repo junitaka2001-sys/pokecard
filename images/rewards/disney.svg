@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="skyBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2B4C7E"/>
+      <stop offset="60%" stop-color="#6F8AB7"/>
+      <stop offset="100%" stop-color="#C5D3E8"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#skyBg)"/>
+
+  <!-- プロメテウス火山 / キャッスルシルエット -->
+  <polygon points="10,85 35,42 45,45 60,35 75,55 90,85" fill="#4B3832"/>
+  <polygon points="28,45 35,42 42,46" fill="#8D5B4C"/>
+  <polygon points="56,38 60,35 65,42" fill="#A86B5A"/>
+
+  <!-- 噴煙 / キラキラ -->
+  <circle cx="60" cy="30" r="4" fill="#F8E5D8" opacity="0.6"/>
+  <circle cx="63" cy="24" r="5" fill="#FDFBF7" opacity="0.5"/>
+  <circle cx="68" cy="18" r="6" fill="#FFFFFF" opacity="0.4"/>
+
+  <!-- 地中海風の港・建物 -->
+  <rect x="25" y="70" width="12" height="15" fill="#E8C39E"/>
+  <polygon points="23,70 31,63 39,70" fill="#B84A39"/>
+  <rect x="42" y="68" width="16" height="17" fill="#F4DFC8"/>
+  <polygon points="40,68 50,60 60,68" fill="#50727B"/>
+  <rect x="62" y="72" width="14" height="13" fill="#E2B184"/>
+  <polygon points="60,72 69,65 78,72" fill="#B84A39"/>
+
+  <!-- 海（水面） -->
+  <ellipse cx="50" cy="88" rx="40" ry="10" fill="#205B7A"/>
+  <ellipse cx="50" cy="92" rx="35" ry="6" fill="#143D52"/>
+  <path d="M 30,86 Q 35,84 40,86 M 50,87 Q 55,85 60,87 M 68,88 Q 73,86 78,88" stroke="#A2D2FF" stroke-width="1.2" fill="none"/>
+
+  <!-- 魔法の星・スパークル -->
+  <polygon points="50,14 52,18 56,20 52,22 50,26 48,22 44,20 48,18" fill="#FFD166"/>
+  <polygon points="28,26 29,29 32,30 29,31 28,34 27,31 24,30 27,29" fill="#FFF" opacity="0.8"/>
+  <polygon points="76,42 77,44 80,45 77,46 76,49 75,46 72,45 75,44" fill="#FFD166" opacity="0.9"/>
+</svg>
