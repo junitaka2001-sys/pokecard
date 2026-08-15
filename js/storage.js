@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   STAMPS: 'pokecard_stamps_v1',
   HISTORY: 'pokecard_history_v1',
   REWARDS: 'pokecard_rewards_v1',
+  TICKETS: 'pokecard_active_tickets_v1',
   SETTINGS: 'pokecard_settings_v1',
   USED_TOKENS: 'pokecard_used_tokens_v1',
   STAMP_ANGLES: 'pokecard_stamp_angles_v1'
@@ -51,11 +52,13 @@ class StorageManager {
 
   init() {
     if (localStorage.getItem(STORAGE_KEYS.STAMPS) === null) {
-      // 初期状態：例として3個スタンプがある状態、または0個
       this.setStamps(3);
     }
     if (!localStorage.getItem(STORAGE_KEYS.REWARDS)) {
       this.setRewards(DEFAULT_REWARDS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.TICKETS)) {
+      this.setTickets([]);
     }
     if (!localStorage.getItem(STORAGE_KEYS.HISTORY)) {
       const initialHistory = [
@@ -78,7 +81,6 @@ class StorageManager {
   initAngles() {
     const angles = [];
     for (let i = 0; i < 10; i++) {
-      // -7度〜+7度のランダム
       angles.push((Math.random() * 14 - 7).toFixed(1));
     }
     localStorage.setItem(STORAGE_KEYS.STAMP_ANGLES, JSON.stringify(angles));
@@ -126,7 +128,7 @@ class StorageManager {
     return { success: true, current: next, prev: current };
   }
 
-  // スタンプ消費（リワード交換）
+  // スタンプ消費（リワード交換 ➔ チケット発行）
   consumeStamps(rewardId) {
     const reward = this.getRewardById(rewardId);
     if (!reward) return { success: false, message: 'リワードが見つかりません' };
@@ -139,6 +141,17 @@ class StorageManager {
     const next = current - reward.requiredStamps;
     this.setStamps(next);
 
+    // 新規チケットを作成して保有リストに追加
+    const newTicket = {
+      id: 'tkt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      rewardId: reward.id,
+      title: reward.title,
+      image: reward.image,
+      description: reward.description,
+      exchangedDate: new Date().toISOString()
+    };
+    this.addTicket(newTicket);
+
     // 履歴に追加
     this.addHistoryItem({
       id: 'hist-' + Date.now(),
@@ -146,10 +159,56 @@ class StorageManager {
       title: `特典交換: ${reward.title}`,
       amount: -reward.requiredStamps,
       rewardId: reward.id,
+      ticketId: newTicket.id,
       date: new Date().toISOString()
     });
 
-    return { success: true, current: next, reward };
+    return { success: true, current: next, reward, ticket: newTicket };
+  }
+
+  // --- 保有チケット管理 ---
+  getTickets() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.TICKETS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  setTickets(tickets) {
+    localStorage.setItem(STORAGE_KEYS.TICKETS, JSON.stringify(tickets));
+  }
+
+  addTicket(ticket) {
+    const tickets = this.getTickets();
+    tickets.unshift(ticket);
+    this.setTickets(tickets);
+  }
+
+  // 特典チケットを使用（消化 ➔ 削除 ➔ 履歴記録）
+  useTicket(ticketId) {
+    const tickets = this.getTickets();
+    const targetIdx = tickets.findIndex(t => t.id === ticketId);
+    if (targetIdx === -1) {
+      return { success: false, message: '対象のチケットが見つかりません' };
+    }
+
+    const usedTicket = tickets[targetIdx];
+    tickets.splice(targetIdx, 1);
+    this.setTickets(tickets);
+
+    // 使用履歴を記録
+    this.addHistoryItem({
+      id: 'hist-use-' + Date.now(),
+      type: 'reward_use',
+      title: `🎟️ 特典使用: ${usedTicket.title}`,
+      amount: 0,
+      rewardId: usedTicket.rewardId,
+      date: new Date().toISOString()
+    });
+
+    return { success: true, ticket: usedTicket };
   }
 
   // リワード一覧

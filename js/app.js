@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let currentTab = 'home';
 let selectedRewardForExchange = null;
+let selectedTicketForUse = null;
 
 function initApp() {
   setupEventListeners();
@@ -110,6 +111,14 @@ function setupEventListeners() {
     });
   }
 
+  // チケット使用確認モーダルの「使用する」実行ボタン
+  const confirmUseTicketBtn = document.getElementById('confirm-use-ticket-btn');
+  if (confirmUseTicketBtn) {
+    confirmUseTicketBtn.addEventListener('click', () => {
+      executeTicketUse();
+    });
+  }
+
   // 音声トグル
   const soundBtn = document.getElementById('sound-toggle-btn');
   if (soundBtn) {
@@ -148,6 +157,7 @@ function switchTab(tabName) {
 function renderApp(justStamped = false) {
   renderStampCard(justStamped);
   renderNextReward();
+  renderActiveTickets();
   renderRewardList();
 }
 
@@ -216,6 +226,52 @@ function renderNextReward() {
       remainEl.innerHTML = `あと <strong>${nextInfo.remaining}</strong> スタンプで交換できます！`;
     }
   }
+}
+
+/**
+ * 2.5 保有中の特典チケットの描画
+ */
+function renderActiveTickets() {
+  const section = document.getElementById('active-tickets-section');
+  const listEl = document.getElementById('active-tickets-list');
+  if (!section || !listEl) return;
+
+  const tickets = window.storageManager.getTickets();
+  if (tickets.length === 0) {
+    section.style.display = 'none';
+    listEl.innerHTML = '';
+    return;
+  }
+
+  section.style.display = 'block';
+  listEl.innerHTML = '';
+
+  tickets.forEach(ticket => {
+    const card = document.createElement('div');
+    card.className = 'ticket-card';
+
+    const date = new Date(ticket.exchangedDate);
+    const dateStr = `${date.getMonth()+1}/${date.getDate()} 交換済み`;
+
+    card.innerHTML = `
+      <div class="ticket-thumb">
+        <img src="${ticket.image}" alt="${ticket.title}">
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-title">${ticket.title}</div>
+        <div class="ticket-date">${dateStr}</div>
+      </div>
+      <button class="ticket-use-btn" type="button">使用する</button>
+    `;
+
+    // 使用ボタン
+    const useBtn = card.querySelector('.ticket-use-btn');
+    useBtn.addEventListener('click', () => {
+      openUseTicketModal(ticket);
+    });
+
+    listEl.appendChild(card);
+  });
 }
 
 /**
@@ -310,7 +366,7 @@ function executeRewardExchange() {
   const res = window.storageManager.consumeStamps(selectedRewardForExchange.id);
   if (res.success) {
     window.soundEffects.playSuccessChime();
-    alert(`🎉「${selectedRewardForExchange.title}」の交換が完了しました！\nおめでとうございます！`);
+    alert(`🎉「${selectedRewardForExchange.title}」の特典チケットを獲得しました！\nホーム画面の「獲得した特典チケット」からいつでも使用できます！✨`);
     renderApp();
     switchTab('home');
   } else {
@@ -337,7 +393,15 @@ function openHistoryModal() {
     history.forEach(item => {
       const date = new Date(item.date);
       const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
-      const isAdd = item.amount > 0;
+      
+      let badgeHtml = '';
+      if (item.type === 'reward_use') {
+        badgeHtml = '<div class="history-item-badge used">使用済</div>';
+      } else if (item.amount > 0) {
+        badgeHtml = `<div class="history-item-badge plus">+${item.amount}</div>`;
+      } else {
+        badgeHtml = `<div class="history-item-badge minus">${item.amount}</div>`;
+      }
 
       const div = document.createElement('div');
       div.className = 'history-item';
@@ -346,9 +410,7 @@ function openHistoryModal() {
           <div class="history-item-label">${item.title}</div>
           <div class="history-item-date">${dateStr}</div>
         </div>
-        <div class="history-item-badge ${isAdd ? 'plus' : 'minus'}">
-          ${isAdd ? '+' : ''}${item.amount}
-        </div>
+        ${badgeHtml}
       `;
       listEl.appendChild(div);
     });

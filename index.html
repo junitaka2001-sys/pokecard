@@ -75,6 +75,16 @@
           </div>
         </div>
 
+        <!-- 保有中の特典チケットエリア（チケットがある時のみ表示） -->
+        <div id="active-tickets-section" class="active-tickets-section" style="display: none;">
+          <div class="tickets-section-title">
+            <span>🎟️</span> 獲得した特典チケット
+          </div>
+          <div id="active-tickets-list" class="active-tickets-list">
+            <!-- JSで動的生成 -->
+          </div>
+        </div>
+
         <!-- QR案内バナー -->
         <button id="qr-banner-btn" class="qr-banner-btn" type="button">
           <div class="qr-icon-box">
@@ -105,7 +115,7 @@
 
         <!-- バージョン識別表示 -->
         <div class="version-badge-container">
-          <span class="version-badge">Ver 1.0.2 (Camera Boosted)</span>
+          <span class="version-badge">Ver 1.1.0 (Ticket Wallet)</span>
         </div>
       </section>
 
@@ -202,6 +212,27 @@
         <div class="exchange-action-buttons">
           <button class="btn-secondary modal-close-trigger" type="button">キャンセル</button>
           <button id="confirm-exchange-btn" class="btn-primary" type="button">交換する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 5.5 特典チケット使用確認モーダル ================= -->
+  <div id="use-ticket-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">🎟️ 特典チケットを使う</div>
+        <button class="modal-close-btn modal-close-trigger" aria-label="閉じる">✕</button>
+      </div>
+      <div class="exchange-confirm-body">
+        <div class="exchange-reward-preview">
+          <img id="use-ticket-img" src="images/rewards/movie.svg" alt="チケット特典">
+        </div>
+        <div id="use-ticket-title" class="exchange-confirm-title">「映画デート」を使用しますか？</div>
+        <p id="use-ticket-desc" class="exchange-confirm-desc">「使用する」を押すとこのチケットを消費し、履歴に使用記録が残ります。</p>
+        <div class="exchange-action-buttons">
+          <button class="btn-secondary modal-close-trigger" type="button">やめる</button>
+          <button id="confirm-use-ticket-btn" class="btn-primary" style="background: linear-gradient(135deg, #E63946 0%, #C9182B 100%); box-shadow: 0 4px 12px rgba(230, 57, 70, 0.35);" type="button">使用する</button>
         </div>
       </div>
     </div>
