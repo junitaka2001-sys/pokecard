@@ -261,6 +261,7 @@ function renderActiveTickets() {
   tickets.forEach(ticket => {
     const card = document.createElement('div');
     card.className = 'ticket-card';
+    card.dataset.ticketId = ticket.id;
 
     const date = new Date(ticket.exchangedDate);
     const dateStr = `${date.getMonth()+1}/${date.getDate()} 交換済み`;
@@ -386,6 +387,58 @@ function executeRewardExchange() {
   }
 
   selectedRewardForExchange = null;
+}
+
+/**
+ * チケット使用確認モーダルを開く
+ */
+function openUseTicketModal(ticket) {
+  selectedTicketForUse = ticket;
+
+  const modal = document.getElementById('use-ticket-modal');
+  const imgEl = document.getElementById('use-ticket-img');
+  const titleEl = document.getElementById('use-ticket-title');
+  const descEl = document.getElementById('use-ticket-desc');
+
+  if (imgEl) imgEl.src = ticket.image;
+  if (titleEl) titleEl.textContent = `「${ticket.title}」を使用しますか？`;
+  if (descEl) {
+    descEl.innerHTML = `「使用する」を押すとこのチケットを消費し、獲得一覧から削除されます。<br><span style="color:#E63946; font-weight:700;">※使用履歴はポイント履歴に保存されます。</span>`;
+  }
+
+  if (modal) modal.classList.add('show');
+}
+
+/**
+ * チケット使用の実行
+ */
+function executeTicketUse() {
+  if (!selectedTicketForUse) return;
+
+  const modal = document.getElementById('use-ticket-modal');
+  if (modal) modal.classList.remove('show');
+
+  const ticketId = selectedTicketForUse.id;
+  const ticketTitle = selectedTicketForUse.title;
+
+  // DOM上の該当チケットカードに消去アニメーションを付与
+  const ticketCard = document.querySelector(`.ticket-card[data-ticket-id="${ticketId}"]`);
+  if (ticketCard) {
+    ticketCard.classList.add('using-out');
+  }
+
+  setTimeout(() => {
+    const res = window.storageManager.useTicket(ticketId);
+    if (res.success) {
+      window.soundEffects.playStampSound();
+      alert(`🎉「${ticketTitle}」を使用しました！\nチケットを消費し、履歴に記録しました✨`);
+      renderApp();
+    } else {
+      alert(res.message);
+    }
+  }, 250);
+
+  selectedTicketForUse = null;
 }
 
 /**

@@ -416,6 +416,16 @@ html, body {
   overflow: hidden;
   background: linear-gradient(135deg, #FFFFFF 0%, #FAF8F2 100%);
   animation: ticketPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ticket-card.using-out {
+  transform: scale(0.85) translateY(-10px);
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 @keyframes ticketPop {
@@ -471,7 +481,7 @@ html, body {
 }
 
 .ticket-use-btn {
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 700;
@@ -480,13 +490,48 @@ html, body {
   color: #FFFFFF;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(230, 57, 70, 0.3);
-  transition: var(--transition);
+  box-shadow: 0 3px 10px rgba(230, 57, 70, 0.35);
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .ticket-use-btn:active {
-  transform: scale(0.94);
+  transform: scale(0.90) translateY(1px) !important;
+  box-shadow: 0 1px 3px rgba(230, 57, 70, 0.4) !important;
+  filter: brightness(0.88);
+}
+
+/* 全ボタン共通のタップ・押下フィードバック */
+button, [role="button"] {
+  touch-action: manipulation;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0.2, 1), filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+button:active, [role="button"]:active {
+  transform: scale(0.93) !important;
+  filter: brightness(0.90) !important;
+}
+
+.reward-exchange-btn.can-exchange:active {
+  transform: scale(0.90) translateY(1px) !important;
+  filter: brightness(0.88) !important;
+}
+
+.admin-btn:active {
+  transform: scale(0.92) !important;
+  background-color: #EAE3D5 !important;
+}
+
+.btn-primary:active {
+  transform: scale(0.94) translateY(1px) !important;
+  filter: brightness(0.9) !important;
+}
+
+.btn-secondary:active {
+  transform: scale(0.94) !important;
+  background-color: #E2DDD5 !important;
 }
 
 /* 履歴バッジ用スタイル（使用済みチケット） */

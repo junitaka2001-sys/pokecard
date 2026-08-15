@@ -303,6 +303,7 @@ class StorageManager {
     localStorage.removeItem(STORAGE_KEYS.STAMPS);
     localStorage.removeItem(STORAGE_KEYS.HISTORY);
     localStorage.removeItem(STORAGE_KEYS.REWARDS);
+    localStorage.removeItem(STORAGE_KEYS.TICKETS);
     localStorage.removeItem(STORAGE_KEYS.USED_TOKENS);
     localStorage.removeItem(STORAGE_KEYS.STAMP_ANGLES);
     this.init();
