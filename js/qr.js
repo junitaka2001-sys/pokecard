@@ -1,6 +1,6 @@
 /**
  * POKECARD - QR Scanner & URL Param Handler Module
- * jsQR + BarcodeDetector + Canvas Frame Scanning
+ * Ultra Fast & Robust QR Scanner for Mobile (iOS Safari, Android, PWA)
  */
 
 class QRManager {
@@ -10,6 +10,21 @@ class QRManager {
     this.scanCanvas = document.createElement('canvas');
     this.scanCtx = this.scanCanvas.getContext('2d', { willReadFrequently: true });
     this.lastScannedTime = 0;
+    this.barcodeDetector = null;
+    this.initBarcodeDetector();
+  }
+
+  async initBarcodeDetector() {
+    if ('BarcodeDetector' in window) {
+      try {
+        const formats = await BarcodeDetector.getSupportedFormats();
+        if (formats && formats.includes('qr_code')) {
+          this.barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+        }
+      } catch (e) {
+        console.warn('BarcodeDetector init error:', e);
+      }
+    }
   }
 
   // 起動時のURLパラメータ検知（最重要機能）
@@ -27,7 +42,6 @@ class QRManager {
         return;
       }
 
-      // トークンを記録
       if (token) {
         window.storageManager.markTokenUsed(token);
       }
@@ -37,7 +51,6 @@ class QRManager {
       this.cleanUrlParams();
 
       if (res.success) {
-        // スタンプ演出を発火
         setTimeout(() => {
           window.showCelebration(() => {
             if (window.renderApp) window.renderApp(true);
@@ -64,13 +77,15 @@ class QRManager {
     modal.classList.add('show');
     if (guideBox) guideBox.classList.remove('detected');
 
+    // 既存ストリームがあれば停止
+    this.stopCameraScanner(false);
+
     try {
-      // iOS Safari や Android Chrome に最適な背面カメラスペック
       const constraints = {
         video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          facingMode: 'environment',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
         },
         audio: false
       };
@@ -78,55 +93,96 @@ class QRManager {
       this.videoStream = await navigator.mediaDevices.getUserMedia(constraints);
       video.srcObject = this.videoStream;
       video.setAttribute('playsinline', 'true');
+      video.setAttribute('autoplay', 'true');
+      video.muted = true;
+
       await video.play();
 
       this.isScanning = true;
       requestAnimationFrame(() => this.scanLoop(video));
     } catch (err) {
       console.warn('Camera access error:', err);
-      const errEl = document.getElementById('qr-camera-error');
-      if (errEl) errEl.style.display = 'block';
+      // フォールバック: 制約なしで再試行
+      try {
+        this.videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = this.videoStream;
+        await video.play();
+        this.isScanning = true;
+        requestAnimationFrame(() => this.scanLoop(video));
+      } catch (err2) {
+        console.error('All camera attempts failed:', err2);
+        const errEl = document.getElementById('qr-camera-error');
+        if (errEl) errEl.style.display = 'block';
+      }
     }
   }
 
-  stopCameraScanner() {
+  stopCameraScanner(closeModal = true) {
     this.isScanning = false;
     if (this.videoStream) {
       this.videoStream.getTracks().forEach(track => track.stop());
       this.videoStream = null;
     }
-    const modal = document.getElementById('qr-scan-modal');
-    if (modal) modal.classList.remove('show');
+    const video = document.getElementById('qr-video');
+    if (video) {
+      video.srcObject = null;
+    }
+    if (closeModal) {
+      const modal = document.getElementById('qr-scan-modal');
+      if (modal) modal.classList.remove('show');
+    }
     const errEl = document.getElementById('qr-camera-error');
     if (errEl) errEl.style.display = 'none';
   }
 
-  // 毎フレームのQR解析ループ
-  scanLoop(video) {
+  // 毎フレームの高速スキャンループ
+  async scanLoop(video) {
     if (!this.isScanning) return;
 
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      this.scanCanvas.width = video.videoWidth;
-      this.scanCanvas.height = video.videoHeight;
-      this.scanCtx.drawImage(video, 0, 0, this.scanCanvas.width, this.scanCanvas.height);
+    if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+      try {
+        let scannedText = null;
 
-      const imageData = this.scanCtx.getImageData(0, 0, this.scanCanvas.width, this.scanCanvas.height);
-
-      // jsQR による高速解析
-      let code = null;
-      if (typeof jsQR !== 'undefined') {
-        code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'dontInvert'
-        });
-      }
-
-      if (code && code.data) {
-        const now = Date.now();
-        if (now - this.lastScannedTime > 2000) {
-          this.lastScannedTime = now;
-          this.onQrDetected(code.data);
-          return;
+        // 1. ネイティブ BarcodeDetector (iOS 17+ / Chrome で最速)
+        if (this.barcodeDetector) {
+          try {
+            const barcodes = await this.barcodeDetector.detect(video);
+            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+              scannedText = barcodes[0].rawValue;
+            }
+          } catch (e) {}
         }
+
+        // 2. jsQR フォールバック（超高精度解析）
+        if (!scannedText && typeof jsQR !== 'undefined') {
+          const w = Math.min(video.videoWidth, 480);
+          const scale = w / video.videoWidth;
+          const h = Math.floor(video.videoHeight * scale);
+
+          if (this.scanCanvas.width !== w || this.scanCanvas.height !== h) {
+            this.scanCanvas.width = w;
+            this.scanCanvas.height = h;
+          }
+
+          this.scanCtx.drawImage(video, 0, 0, w, h);
+          const imageData = this.scanCtx.getImageData(0, 0, w, h);
+          const code = jsQR(imageData.data, w, h, { inversionAttempts: 'attemptBoth' });
+          if (code && code.data) {
+            scannedText = code.data;
+          }
+        }
+
+        // 検出成功時
+        if (scannedText) {
+          const now = Date.now();
+          if (now - this.lastScannedTime > 2000) {
+            this.lastScannedTime = now;
+            this.onQrDetected(scannedText);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Scan frame error:', err);
       }
     }
 
@@ -135,25 +191,23 @@ class QRManager {
     }
   }
 
-  // QR検出時の処理
+  // QR検出時の演出 & 処理
   onQrDetected(data) {
     const guideBox = document.getElementById('qr-scan-guide-box');
     if (guideBox) guideBox.classList.add('detected');
 
-    // バイブレーション（対応機種）
     if (navigator.vibrate) {
-      try { navigator.vibrate(200); } catch(e){}
+      try { navigator.vibrate([100, 50, 100]); } catch(e){}
     }
 
     setTimeout(() => {
       this.handleScannedData(data);
-    }, 300);
+    }, 200);
   }
 
   handleScannedData(data) {
-    this.stopCameraScanner();
+    this.stopCameraScanner(true);
 
-    // 読み取ったデータからトークンまたはURLパラメータを抽出
     let token = null;
     try {
       if (data.includes('?') || data.includes('http')) {
@@ -185,23 +239,36 @@ class QRManager {
     }
   }
 
-  // 画像ファイル（スクショ）からのQR読み取り
+  // 画像ファイル（スクショ等）からの読み取り
   scanImageFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        this.scanCanvas.width = img.width;
-        this.scanCanvas.height = img.height;
-        this.scanCtx.drawImage(img, 0, 0);
-        const imageData = this.scanCtx.getImageData(0, 0, img.width, img.height);
+        const maxDim = 800;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.floor(h * (maxDim / w));
+            w = maxDim;
+          } else {
+            w = Math.floor(w * (maxDim / h));
+            h = maxDim;
+          }
+        }
+
+        this.scanCanvas.width = w;
+        this.scanCanvas.height = h;
+        this.scanCtx.drawImage(img, 0, 0, w, h);
+        const imageData = this.scanCtx.getImageData(0, 0, w, h);
         
         if (typeof jsQR !== 'undefined') {
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          const code = jsQR(imageData.data, w, h, { inversionAttempts: 'attemptBoth' });
           if (code && code.data) {
             this.handleScannedData(code.data);
           } else {
-            alert('QRコードを検出できませんでした。別の画像をお試しください。');
+            alert('QRコードを検出できませんでした。より明るく正面から写った画像をお試しください。');
           }
         }
       };

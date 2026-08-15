@@ -102,6 +102,11 @@
           </svg>
           <span>ポイント履歴を見る ›</span>
         </button>
+
+        <!-- バージョン識別表示 -->
+        <div class="version-badge-container">
+          <span class="version-badge">Ver 1.0.2 (Camera Boosted)</span>
+        </div>
       </section>
 
       <!-- ================= 2. リワード画面 ================= -->
@@ -256,6 +261,14 @@
 
   <!-- Scripts -->
   <script src="js/jsQR.min.js"></script>
+  <script>
+    // jsQRのロード確認 & CDNフォールバック
+    if (typeof jsQR === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+      document.head.appendChild(script);
+    }
+  </script>
   <script src="js/storage.js"></script>
   <script src="js/stamp.js"></script>
   <script src="js/qr.js"></script>
