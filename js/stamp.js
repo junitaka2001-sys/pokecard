@@ -183,6 +183,7 @@ class ConfettiEngine {
 // グローバルインスタンス
 window.soundEffects = new SoundEffects();
 
+// スタンプ獲得演出（簡素化版：紙吹雪30枚）
 window.showCelebration = function(onComplete) {
   const overlay = document.getElementById('celebration-overlay');
   if (!overlay) {
@@ -196,10 +197,10 @@ window.showCelebration = function(onComplete) {
 
   overlay.classList.add('show');
   window.soundEffects.playStampSound();
-  
-  // 少し遅れて紙吹雪
+
+  // 簡素化：紙吹雪を30枚に削減
   setTimeout(() => {
-    window.confettiEngine.burst(80);
+    window.confettiEngine.burst(30);
   }, 150);
 
   // 約1.4秒後にホームへ自動復帰
@@ -209,3 +210,48 @@ window.showCelebration = function(onComplete) {
     if (onComplete) onComplete();
   }, 1500);
 };
+
+// リワード交換成功演出（豪華版）
+window.showRewardCelebration = function(rewardTitle, onComplete) {
+  const overlay = document.getElementById('reward-celebration-overlay');
+  if (!overlay) {
+    // オーバーレイ未存在時はフォールバック
+    window.soundEffects.playSuccessChime();
+    if (onComplete) onComplete();
+    return;
+  }
+
+  // タイトル更新
+  const titleEl = overlay.querySelector('.reward-cel-title');
+  if (titleEl) titleEl.textContent = `「${rewardTitle}」`;
+
+  if (!window.rewardConfettiEngine) {
+    window.rewardConfettiEngine = new ConfettiEngine('reward-confetti-canvas');
+  }
+
+  overlay.classList.add('show');
+  window.soundEffects.playSuccessChime();
+
+  // 豪華版：段階的に大量の紙吹雪
+  setTimeout(() => { window.rewardConfettiEngine.burst(120); }, 100);
+  setTimeout(() => { window.rewardConfettiEngine.burst(80); },  600);
+
+  // タップでスキップ可能
+  const skipHandler = () => dismissRewardCelebration(overlay, onComplete);
+  overlay.addEventListener('touchstart', skipHandler, { once: true, passive: true });
+  overlay.addEventListener('click', skipHandler, { once: true });
+
+  // 3秒後に自動終了
+  setTimeout(() => dismissRewardCelebration(overlay, onComplete), 3000);
+};
+
+function dismissRewardCelebration(overlay, onComplete) {
+  if (overlay.classList.contains('hiding')) return;
+  overlay.classList.add('hiding');
+  overlay.classList.remove('show');
+  if (window.rewardConfettiEngine) window.rewardConfettiEngine.stop();
+  setTimeout(() => {
+    overlay.classList.remove('hiding');
+    if (onComplete) onComplete();
+  }, 400);
+}

@@ -10,7 +10,8 @@ const STORAGE_KEYS = {
   TICKETS: 'pokecard_active_tickets_v1',
   SETTINGS: 'pokecard_settings_v1',
   USED_TOKENS: 'pokecard_used_tokens_v1',
-  STAMP_ANGLES: 'pokecard_stamp_angles_v1'
+  STAMP_ANGLES: 'pokecard_stamp_angles_v1',
+  LOTTERIES: 'pokecard_lotteries_v1'
 };
 
 // デフォルトのリワード一覧
@@ -306,7 +307,57 @@ class StorageManager {
     localStorage.removeItem(STORAGE_KEYS.TICKETS);
     localStorage.removeItem(STORAGE_KEYS.USED_TOKENS);
     localStorage.removeItem(STORAGE_KEYS.STAMP_ANGLES);
+    localStorage.removeItem(STORAGE_KEYS.LOTTERIES);
     this.init();
+  }
+
+  // --- リワード更新 ---
+  updateReward(id, fields) {
+    const rewards = this.getRewards();
+    const idx = rewards.findIndex(r => r.id === id);
+    if (idx === -1) return false;
+    rewards[idx] = { ...rewards[idx], ...fields };
+    this.setRewards(rewards);
+    return true;
+  }
+
+  // --- 抽選データ管理 ---
+  getLotteries() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.LOTTERIES);
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  }
+
+  setLotteries(lotteries) {
+    localStorage.setItem(STORAGE_KEYS.LOTTERIES, JSON.stringify(lotteries));
+  }
+
+  addLottery(lottery) {
+    const list = this.getLotteries();
+    const item = {
+      id: 'lot_' + Date.now(),
+      title: lottery.title || '',
+      url: lottery.url || '',
+      deadline: lottery.deadline || ''
+    };
+    list.unshift(item);
+    this.setLotteries(list);
+    return item;
+  }
+
+  updateLottery(id, fields) {
+    const list = this.getLotteries();
+    const idx = list.findIndex(l => l.id === id);
+    if (idx === -1) return false;
+    list[idx] = { ...list[idx], ...fields };
+    this.setLotteries(list);
+    return true;
+  }
+
+  deleteLottery(id) {
+    const list = this.getLotteries().filter(l => l.id !== id);
+    this.setLotteries(list);
   }
 }
 
