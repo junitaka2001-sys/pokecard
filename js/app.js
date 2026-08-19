@@ -5,8 +5,38 @@
 document.addEventListener('DOMContentLoaded', () => {
   // iOS Safari で :active 擬似クラスを有効化する必須トリガー
   document.addEventListener('touchstart', () => {}, { passive: true });
-  initApp();
+  initSplash();
 });
+
+/**
+ * オープニングスプラッシュ演出（約2秒後にホームへ移行）
+ */
+function initSplash() {
+  const splash = document.getElementById('app-splash-screen');
+  if (!splash) {
+    initApp();
+    return;
+  }
+
+  const SPLASH_DURATION = 2000; // 2秒
+
+  // タップでスキップ
+  const skipHandler = () => dismissSplash(splash);
+  splash.addEventListener('touchstart', skipHandler, { passive: true });
+  splash.addEventListener('click', skipHandler);
+
+  // 2秒後に自動フェードアウト
+  setTimeout(() => dismissSplash(splash), SPLASH_DURATION);
+}
+
+function dismissSplash(splash) {
+  if (splash.classList.contains('fade-out') || splash.classList.contains('hidden')) return;
+  splash.classList.add('fade-out');
+  setTimeout(() => {
+    splash.classList.add('hidden');
+    initApp();
+  }, 500); // フェードアウトのtransition時間に合わせる
+}
 
 let currentTab = 'home';
 let selectedRewardForExchange = null;
@@ -160,6 +190,49 @@ function setupEventListeners() {
   document.addEventListener('touchcancel', (e) => {
     document.querySelectorAll('.is-touched').forEach(el => el.classList.remove('is-touched'));
   }, { passive: true });
+
+  // 歯車ボタン → パスワードモーダルを開く
+  const gearBtn = document.getElementById('admin-gear-btn');
+  if (gearBtn) {
+    gearBtn.addEventListener('click', () => {
+      openAdminPasswordModal();
+    });
+  }
+
+  // パスワードモーダル: 閉じる / キャンセル
+  const pwCloseBtn = document.getElementById('admin-pw-close-btn');
+  const pwCancelBtn = document.getElementById('admin-pw-cancel-btn');
+  [pwCloseBtn, pwCancelBtn].forEach(btn => {
+    if (btn) {
+      btn.addEventListener('click', () => {
+        closeAdminPasswordModal();
+      });
+    }
+  });
+
+  // パスワードモーダル: 背景タップで閉じる
+  const pwModal = document.getElementById('admin-password-modal');
+  if (pwModal) {
+    pwModal.addEventListener('click', (e) => {
+      if (e.target === pwModal) closeAdminPasswordModal();
+    });
+  }
+
+  // パスワードモーダル: 確認ボタン
+  const pwConfirmBtn = document.getElementById('admin-pw-confirm-btn');
+  if (pwConfirmBtn) {
+    pwConfirmBtn.addEventListener('click', () => {
+      submitAdminPassword();
+    });
+  }
+
+  // パスワード入力欄: Enterキーで確認
+  const pwInput = document.getElementById('admin-pw-input');
+  if (pwInput) {
+    pwInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitAdminPassword();
+    });
+  }
 
   // テスト用・管理者メニュー機能
   setupAdminControls();
@@ -601,5 +674,62 @@ function setupAdminControls() {
         alert('データを初期化しました。');
       }
     });
+  }
+}
+
+/**
+ * 管理者パスワードモーダルを開く
+ */
+function openAdminPasswordModal() {
+  const modal = document.getElementById('admin-password-modal');
+  const input = document.getElementById('admin-pw-input');
+  const errorEl = document.getElementById('admin-pw-error');
+  if (!modal) return;
+  if (input) input.value = '';
+  if (errorEl) errorEl.style.display = 'none';
+  modal.classList.add('show');
+  // キーボードを開くため少し遅らせてフォーカス
+  setTimeout(() => { if (input) input.focus(); }, 300);
+}
+
+/**
+ * 管理者パスワードモーダルを閉じる
+ */
+function closeAdminPasswordModal() {
+  const modal = document.getElementById('admin-password-modal');
+  const input = document.getElementById('admin-pw-input');
+  const errorEl = document.getElementById('admin-pw-error');
+  if (modal) modal.classList.remove('show');
+  if (input) input.value = '';
+  if (errorEl) errorEl.style.display = 'none';
+}
+
+/**
+ * パスワード送信・照合
+ */
+function submitAdminPassword() {
+  const ADMIN_PASSWORD = '02903991';
+  const input = document.getElementById('admin-pw-input');
+  const errorEl = document.getElementById('admin-pw-error');
+  if (!input) return;
+
+  if (input.value === ADMIN_PASSWORD) {
+    // 認証成功 → パスワードモーダルを閉じて管理モーダルを開く
+    closeAdminPasswordModal();
+    setTimeout(() => {
+      openHistoryModal();
+    }, 250);
+  } else {
+    // 認証失敗 → エラー表示してシェイク
+    if (errorEl) {
+      errorEl.style.display = 'block';
+      // シェイクを再実行するため一度クラスをリセット
+      errorEl.style.animation = 'none';
+      // eslint-disable-next-line no-unused-expressions
+      errorEl.offsetHeight; // reflow
+      errorEl.style.animation = '';
+    }
+    input.value = '';
+    input.focus();
   }
 }

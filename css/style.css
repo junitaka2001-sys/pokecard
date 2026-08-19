@@ -1275,3 +1275,167 @@ button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
   color: var(--text-muted);
   z-index: 20;
 }
+
+/* ==========================================================================
+   管理者用 歯車ボタン (Admin Gear Button)
+   ========================================================================== */
+.admin-gear-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  z-index: 20;
+}
+
+/* ==========================================================================
+   管理者パスワードモーダル (Admin Password Modal)
+   ========================================================================== */
+.admin-pw-body {
+  padding: 8px 0 16px;
+  text-align: center;
+}
+
+.admin-pw-desc {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.admin-pw-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 20px;
+  font-family: var(--font-en);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-align: center;
+  border: 2px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  background: #FAF8F3;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s ease;
+  -webkit-appearance: none;
+}
+
+.admin-pw-input:focus {
+  border-color: var(--color-primary);
+}
+
+.admin-pw-error {
+  font-size: 12.5px;
+  color: var(--color-stamp-red);
+  font-weight: 700;
+  margin-top: 8px;
+  animation: pwShake 0.3s ease;
+}
+
+@keyframes pwShake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-6px); }
+  75%      { transform: translateX(6px); }
+}
+
+/* ==========================================================================
+   オープニング スプラッシュ画面 (Opening Splash Screen)
+   ========================================================================== */
+.app-splash-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-main);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.5s ease;
+}
+
+.app-splash-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-splash-screen.hidden {
+  display: none;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.splash-logo-glow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(197, 160, 89, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.splash-ball-icon {
+  width: 90px;
+  height: 90px;
+  opacity: 0;
+  transform: scale(0.7);
+  animation: splashBallIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  filter: drop-shadow(0 8px 24px rgba(197, 160, 89, 0.35));
+  position: relative;
+  z-index: 1;
+}
+
+.splash-app-title {
+  font-family: var(--font-en);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--text-main);
+  text-indent: 0.2em;
+  opacity: 0;
+  animation: splashFadeUp 0.5s ease 0.75s forwards;
+  margin-top: 14px;
+}
+
+.splash-app-subtitle {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  opacity: 0;
+  animation: splashFadeUp 0.5s ease 0.9s forwards;
+  margin-top: 4px;
+}
+
+.splash-skip-hint {
+  position: absolute;
+  bottom: calc(36px + env(safe-area-inset-bottom, 0px));
+  font-size: 11px;
+  color: var(--text-light);
+  opacity: 0;
+  animation: splashFadeUp 0.5s ease 1.0s forwards;
+  letter-spacing: 0.08em;
+}
+
+@keyframes splashBallIn {
+  0%   { opacity: 0; transform: scale(0.7) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes splashFadeUp {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
