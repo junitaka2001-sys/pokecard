@@ -28,7 +28,7 @@ class QRManager {
   }
 
   // 起動時のURLパラメータ検知（最重要機能）
-  checkUrlParamsOnLoad() {
+  async checkUrlParamsOnLoad() {
     const urlParams = new URLSearchParams(window.location.search);
     
     // パラメータ判定: ?add_stamp=1 or ?stamp=1 or ?token=xxx
@@ -36,7 +36,7 @@ class QRManager {
     const token = urlParams.get('token');
 
     if (addStamp || token) {
-      if (token && window.storageManager.isTokenUsed(token)) {
+      if (token && (await window.storageManager.isTokenUsed(token))) {
         alert('このQRコード/リンクは既に使用されています。');
         this.cleanUrlParams();
         return;
@@ -47,13 +47,13 @@ class QRManager {
       }
 
       // スタンプ付与 & 演出
-      const res = window.storageManager.addStamp('ポケカ当選スタンプ（QR獲得）');
+      const res = await window.storageManager.addStamp('ポケカ当選スタンプ（QR獲得）');
       this.cleanUrlParams();
 
       if (res.success) {
         setTimeout(() => {
-          window.showCelebration(() => {
-            if (window.renderApp) window.renderApp(true);
+          window.showCelebration(async () => {
+            if (window.renderApp) await window.renderApp(true);
           });
         }, 300);
       } else {
@@ -205,7 +205,7 @@ class QRManager {
     }, 200);
   }
 
-  handleScannedData(data) {
+  async handleScannedData(data) {
     this.stopCameraScanner(true);
 
     let token = null;
@@ -220,7 +220,7 @@ class QRManager {
       token = data;
     }
 
-    if (token && window.storageManager.isTokenUsed(token)) {
+    if (token && (await window.storageManager.isTokenUsed(token))) {
       alert('このQRコードは既に使用済みです。');
       return;
     }
@@ -229,10 +229,10 @@ class QRManager {
       window.storageManager.markTokenUsed(token);
     }
 
-    const res = window.storageManager.addStamp('ポケカ当選スタンプ（カメラ読取）');
+    const res = await window.storageManager.addStamp('ポケカ当選スタンプ（カメラ読取）');
     if (res.success) {
-      window.showCelebration(() => {
-        if (window.renderApp) window.renderApp(true);
+      window.showCelebration(async () => {
+        if (window.renderApp) await window.renderApp(true);
       });
     } else {
       alert(res.message);

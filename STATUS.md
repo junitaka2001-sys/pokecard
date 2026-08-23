@@ -2,7 +2,7 @@
 
 このファイルはAIエージェント間の引き継ぎ用です。作業完了のたびに更新してください。
 
-**最終更新: 2026-08-19 / 更新者: Kiro**
+**最終更新: 2026-08-23 / 更新者: Antigravity**
 
 ---
 
@@ -10,16 +10,16 @@
 
 | 項目 | 状態 |
 |------|------|
-| バージョン | **2.0.0** |
-| 実装フェーズ | 機能追加フェーズ（基本機能は完成済み） |
-| 動作確認 | **実機未確認**（iPhone Safari での目視確認が必要） |
+| バージョン | **2.0.0**（Supabase移行完了時に3.0.0へ） |
+| 実装フェーズ | **Supabase移行 Phase 2完了・Phase 3待ち** |
+| 動作確認 | 実機未確認 |
 | デプロイ | 未デプロイ（ローカルファイルのみ） |
 
 ---
 
 ## 完了している機能
 
-### コア機能
+### コア機能（localStorage版・動作済み）
 - [x] スタンプカード（10マス）表示・スタンプ付与・バウンスアニメーション
 - [x] リワード一覧・交換確認モーダル・スタンプ消費・チケット発行
 - [x] 保有チケット一覧・チケット使用確認・使用履歴記録
@@ -32,59 +32,135 @@
 ### UI・UX
 - [x] スプラッシュ画面（2秒・タップスキップ）
 - [x] 下部タブナビゲーション（ホーム・リワード・抽選）
-- [x] 効果音（スタンプ音・ファンファーレ）・ミュートトグル
-- [x] タッチフィードバック（`.is-touched` / CSS `:active`）
-- [x] iPhone Safari 最適化（`100dvh`・`overscroll-behavior`・`85svh`・safe-area）
+- [x] 効果音・ミュートトグル
+- [x] タッチフィードバック
+- [x] iPhone Safari 最適化（100dvh・overscroll・85svh・safe-area）
+- [x] リワードランク別アイコン（銅・銀・金・王冠）
 
-### 管理機能
-- [x] 歯車ボタン → パスワード認証 → 管理モーダル（歯車からのみアクセス可）
-- [x] スタンプ操作（+1・満杯設定・初期化リセット・アプリ更新）
-- [x] リワード名・必要スタンプ数の編集（localStorage に即時保存）
-- [x] 抽選情報の追加・編集・削除（CRUD）
+### 管理機能（localStorage版）
+- [x] 歯車 → パスワード認証 → 管理モーダル
+- [x] スタンプ操作・リワード編集・抽選CRUD
 
-### エフェクト
-- [x] スタンプ獲得演出（簡素版：紙吹雪30枚・1.5秒自動終了）
-- [x] リワード交換演出（豪華版：紙吹雪200枚・3秒・タップスキップ）
-
-### データ管理
-- [x] localStorage による全データ永続化（キー一覧は `SPEC.md` §3 参照）
-- [x] 抽選データ CRUD（`pokecard_lotteries_v1`）
-- [x] リワード更新（`updateReward()` メソッド）
-
-### PWA
-- [x] Service Worker によるオフラインキャッシュ（Network First 戦略）
-- [x] manifest.json（ホーム画面追加対応）
+### Supabase移行（進行中）
+- [x] **Phase 0完了**：Supabaseプロジェクト作成・テーブル作成・RLS設定・Anonymous Auth有効化・管理者アカウント設定
+- [x] **Phase 1完了**：`js/supabase.js` 新規作成・`index.html` CDN追加・`app.js` async化
+- [x] **Phase 2完了**：`js/storage.js` 読み取り系Supabase移行・localStorageキャッシュ・`app.js`/`qr.js` 非同期対応
 
 ---
 
 ## 現在作業中の内容
 
-**なし**（直前の作業セッションで以下を完了し、引き継ぎ中）
+**Phase 3（storage.js 書き込み系のSupabase移行）が次のタスク。**
 
-直前セッションで実施した変更：
-1. `storage.js` — 抽選 CRUD メソッド・`updateReward()` 追加
-2. `stamp.js` — スタンプ紙吹雪を簡素化・`showRewardCelebration()` 新規追加
-3. `index.html` — 抽選タブ・管理モーダル・豪華エフェクトオーバーレイ追加、history-modal から管理ツール削除
-4. `app.js` — 全面書き直し（抽選ページ描画・管理モーダル・リワード編集・抽選 CRUD）
-5. `css/style.css` — 抽選カード・管理フォーム・豪華エフェクトのスタイル追加
+Phase 2まで完了。`storage.js` の読み取り系はSupabase SELECT + localStorageキャッシュへ移行済み。
+`app.js` の描画系および `qr.js` の読み取り処理も `async/await` に対応。
+書き込み系（`addStamp`, `consumeStamps`, `useTicket`, `markTokenUsed` 等）のSupabase連携は未着手（localStorageのみ更新）。
 
 ---
 
 ## 次に行うべき作業
 
-現時点で具体的な次タスクの指示はなし。以下は今後の候補として記録する。
+### Supabase移行フェーズ（Phase 3から再開）
 
-### 優先度：高
-- [ ] **iPhone Safari 実機確認** — Ver 2.0.0 での全機能を実際の iPhone で動作確認する
-- [ ] **sw.js のキャッシュバージョン更新** — 現在 `CACHE_NAME = 'pokecard-v1.1.2'` のまま。Ver 2.0.0 に合わせて `'pokecard-v2.0.0'` に更新が必要
+#### Phase 3（storage.js 書き込み系）★次のタスク
+- [ ] `addStamp()` → Supabase UPDATE(stamp_cards) + INSERT(history)
+- [ ] `consumeStamps()` → Supabase UPDATE + INSERT(tickets) + INSERT(history)
+- [ ] `useTicket()` → Supabase DELETE(tickets) + INSERT(history)
+- [ ] `markTokenUsed()` → Supabase INSERT(used_tokens)
+- [ ] `setStamps()` → Supabase UPDATE（管理者操作用）
+- [ ] `setStamps()` → Supabase UPDATE（管理者操作用）
+- [ ] `qr.js` の `handleScannedData()` / `checkUrlParamsOnLoad()` を async 化
 
-### 優先度：中
-- [ ] リワードアイコンの個別 SVG 差し替え（現在は全リワードが同一トロフィーアイコン）
-- [ ] 管理モーダル内スクロール対応確認（リワード4件＋抽選が多い場合）
+#### Phase 4（管理者機能の移行）
+- [ ] 管理モードに「管理者ログイン」ボタン追加（`signInAsAdmin()` を呼ぶ）
+- [ ] `updateReward()` → Supabase UPDATE(rewards)
+- [ ] `addLottery()` / `updateLottery()` / `deleteLottery()` → Supabase CRUD
+- [ ] `resetAll()` のSupabase対応
+- [ ] `app.js` の管理系関数を async 化
 
-### 優先度：低
-- [ ] `images/rewards/` 配下の SVG ファイル（movie.svg 等）は未使用になったが削除は未実施
-- [ ] apple-touch-startup-image の設定（PWA ホーム画面起動時の白画面対策）
+#### Phase 5（localStorage移行処理の確認）
+- [ ] `migrateLegacyData()` の動作テスト（既にsupabase.jsに実装済み）
+- [ ] Supabaseダッシュボードで移行後データ確認
+
+#### Phase 6（sw.js 調整・仕上げ）
+- [ ] `sw.js` に `supabase.js` 追加・`*.supabase.co` を Network Only 設定
+- [ ] `CACHE_NAME` を `'pokecard-v3.0.0'` に更新
+- [ ] オフライン時のエラー表示実装
+- [ ] バージョンバッジを `Ver 3.0.0` に更新・`SPEC.md` 変更履歴追記
+
+#### Phase 7（実機確認）
+- [ ] はるかの iPhone Safari で全操作確認
+- [ ] 小室の端末で管理者操作全確認
+- [ ] QR発行 → はるかが読み取り → Supabase反映確認
+- [ ] リワード編集 → はるかの画面に反映確認
+
+---
+
+## Supabase 設定情報（参照用）
+
+| 項目 | 状態 |
+|------|------|
+| Supabaseプロジェクト | 作成済み（junitaka2001-sys's Org / POKECARD） |
+| プロジェクトID | `dknmhyiqkurywtbskpnp` |
+| 管理者アカウント | `junitaka2001@gmail.com`（app_metadata: `{"role":"admin"}` 設定済み） |
+| Anonymous Auth | 有効化済み |
+| テーブル | 6テーブル作成済み（stamp_cards / history / tickets / used_tokens / rewards / lotteries） |
+| 初期リワード | 4件投入済み（reward-1〜4） |
+| anon key | `supabase.js` に設定済み（`eyJ`で始まるJWT形式） |
+| URL設定 | `supabase.js` に設定済み（`https://dknmhyiqkurywtbskpnp.supabase.co`） |
+
+**注意：service_role key が誤って使用されたため、ローテーション（再生成）済み。**
+
+---
+
+## Supabase移行 設計（確定版）
+
+### ユーザー構成
+
+| ユーザー | 役割 | 認証方式 |
+|---------|------|---------|
+| はるか | 利用者 | Anonymous Auth（操作不要） + 初回1回Magic Linkでメール登録 |
+| 小室 | 管理者 | メール＋パスワードでSupabase Auth サインイン（初回1回のみ） |
+
+### アーキテクチャ
+
+```
+GitHub Pages（静的配信・変化なし）
+    ↓
+POKECARD (Vanilla JS + HTML/CSS)
+    ├─ window.storageManager.*()  ← APIシグネチャ維持
+    │       ├─ オンライン：Supabase API（正）
+    │       │     └─ 成功後 localStorage にもキャッシュ
+    │       └─ オフライン：localStorage 読み取り専用
+    └─ Supabase JS Client (CDN)
+            └─ Supabase（クラウド）
+                    ├─ Auth（Anonymous Auth + Magic Link）
+                    └─ PostgreSQL（RLS有効）
+```
+
+### テーブル構成
+
+| テーブル | user_id | 用途 |
+|---------|---------|------|
+| `stamp_cards` | あり | スタンプ数・角度 |
+| `history` | あり | 獲得・交換・使用履歴 |
+| `tickets` | あり | 保有チケット |
+| `used_tokens` | あり | 使用済みQRトークン（ユーザー単位） |
+| `rewards` | なし（マスタ） | 小室が編集→はるかに反映 |
+| `lotteries` | なし（マスタ） | 小室が編集→はるかに反映 |
+
+### 管理者権限
+
+- `app_metadata: {"role": "admin"}` で管理者判定（`is_admin()` 関数）
+- `user_metadata` は**不使用**（ユーザー自身が変更可能なため認可情報に不適切）
+- `rewards` / `lotteries` の書き込みは `is_admin()=true` のみ許可
+
+### UID消滅対策（Magic Link昇格）
+
+```
+初回起動: Anonymous Auth → メールアドレス登録促す → linkIdentity()で昇格
+UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール入力 → Magic Linkで復元
+```
 
 ---
 
@@ -92,38 +168,29 @@
 
 | # | 問題 | 影響度 | 状態 |
 |---|------|--------|------|
-| 1 | `sw.js` の `CACHE_NAME` が `'pokecard-v1.1.2'` のままでバージョンと不一致 | 中（更新通知が正しく働かない可能性） | 未対応 |
-| 2 | リワード交換・チケット使用モーダルのプレビューが全て同一トロフィー SVG | 低（機能的問題なし） | 仕様として許容中 |
-| 3 | `images/rewards/*.svg` が未使用のままプロジェクトに残存 | 低（ストレージのみ） | 未対応 |
-| 4 | Ver 2.0.0 での実機動作未確認 | 高（iPhone Safariの表示崩れが潜在する可能性） | 要確認 |
+| 1 | `sw.js` の `CACHE_NAME` が `'pokecard-v1.1.2'` のまま | 中 | Phase 6で対応 |
+| 2 | 実機動作未確認（Ver 2.0.0 + Supabase移行中） | 高 | Phase 7で確認 |
+| 3 | `images/rewards/*.svg` が未使用のまま残存 | 低 | 未対応 |
+| 4 | `isAdminUser()` 関数のセッション参照方法が暫定実装 | 中 | Phase 4で正式実装 |
 
 ---
 
 ## 今後注意すべき事項
 
-### データ互換性
-- localStorage のキー名・データ構造を変更すると**既存ユーザーのデータが失われる**
-- 変更が必要な場合はキー名にバージョンサフィックスを追加する（例: `_v2`）
-- `pokecard_rewards_v1` は `DEFAULT_REWARDS` で初期化されるが、一度保存されると初期化は走らない
+### Supabaseキー管理
+- `js/supabase.js` に anon key を直書き（GitHub公開リポジトリの場合は許容範囲）
+- **service_role key は絶対にクライアントに置かない**（今回誤って設定したためローテーション済み）
+- anon key はSupabase仕様上クライアント公開を想定。RLSで保護
 
-### 管理者パスワード
-- 管理者パスワードは `app.js` の `ADMIN_PASSWORD` 定数に平文で格納されている
-- パスワードそのものをSTATUS.mdに記載しない
-- パスワード変更は `app.js` の当該定数のみ変更すればよい
+### storage.jsの移行方針
+- `window.storageManager` の公開APIシグネチャは維持（app.js・qr.jsへの変更を最小化）
+- 全メソッドが async になるため、呼び出し側も async/await が必要
+- オフライン時は localStorage キャッシュから読み取り（書き込みはエラー表示）
+- Realtime・オフライン書き込みキューは実装しない
 
-### Service Worker の更新反映
-- `sw.js` を変更した場合、`CACHE_NAME` を上げないと旧キャッシュが残り続ける
-- 管理モーダルの「アプリ最新版に更新」ボタンで手動クリア可能
-
-### リワードデータの扱い
-- `pokecard_rewards_v1` に一度でもデータが保存されると、`DEFAULT_REWARDS`（`storage.js` 内定数）への変更は反映されない
-- `DEFAULT_REWARDS` のタイトル・スタンプ数を変えても既存ユーザーには無効
-- 管理モーダルのリワード編集か、初期化リセットで対応する
-
-### チケットの画像パス
-- `consumeStamps()` でチケット発行時に `reward.image` が保存される
-- リワード編集で `image` フィールドは変更できない（現在のUIにない）
-- 発行済みチケットの `image` パスを変えたい場合は localStorage を直接編集するか、再発行が必要
+### ランクアイコンの仕様
+- ランクは `requiredStamps` の値で動的に決定（`getRewardRank()` 関数、`app.js` 内）
+- ランク境界値：3以下=銅、5〜6=銀、7〜9=金、10=王冠
 
 ---
 
@@ -131,24 +198,8 @@
 
 | ファイル | 変更日 | 変更者 | 概要 |
 |----------|--------|--------|------|
-| `js/storage.js` | 2026-08-19 | Kiro | LOTTERIES キー・updateReward・getLotteries 等追加 |
-| `js/stamp.js` | 2026-08-19 | Kiro | 紙吹雪簡素化・showRewardCelebration 追加 |
-| `index.html` | 2026-08-19 | Kiro | 抽選タブ・管理モーダル・豪華エフェクト追加 |
-| `js/app.js` | 2026-08-19 | Kiro | 全面書き直し（抽選・管理・リワード編集） |
-| `css/style.css` | 2026-08-19 | Kiro | 抽選・管理・エフェクト CSS 追加 |
-| `SPEC.md` | 2026-08-19 | Kiro | Ver 2.0.0 仕様書として新規作成 |
-| `AGENTS.md` | 2026-08-19 | Kiro | AI共通開発ルール 新規作成 |
-| `STATUS.md` | 2026-08-19 | Kiro | 作業状態管理ファイル 新規作成 |
+| `js/storage.js` | 2026-08-23 | Antigravity | 読み取り系メソッド（getRewards, getLotteries, getStamps, getStampAngles, getTickets, getHistory, isTokenUsed 等）を async 化し、Supabase SELECT と localStorage キャッシュを追加 |
+| `js/app.js` | 2026-08-23 | Antigravity | 描画系・モーダル系・管理系の読み取り呼び出し元をすべて async/await に対応 |
+| `js/qr.js` | 2026-08-23 | Antigravity | `checkUrlParamsOnLoad()` と `handleScannedData()` のトークン検証・スタンプ付与を async/await に対応 |
 
-## 直近の作業
-
-### 2026-08-21 / Kiro
-- AGENTS.mdを作成
-- STATUS.mdを作成
-- AI間引き継ぎルールを整備
-- 実装変更なし
-
-### 次のAIへ
-- AGENTS.mdのルールを確認すること
-- 現在の次タスクはiPhone Safari実機確認
-- sw.jsのCACHE_NAME更新が未対応
+**実機確認：未実施（Phase 7で実施予定）**

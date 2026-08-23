@@ -1829,3 +1829,62 @@ button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
   0%   { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   リワードランク別アイコンカラー
+   bronze(3) → silver(5) → gold(7) → platinum(10)
+   ========================================================================== */
+
+/* 銅 — ブロンズ */
+.reward-rank-bronze {
+  background: linear-gradient(135deg, #FDF0E6 0%, #F3DEC4 100%);
+  border-color: #E0B98A !important;
+}
+.reward-rank-bronze svg {
+  stroke: #A0622A;
+}
+
+/* 銀 — シルバー */
+.reward-rank-silver {
+  background: linear-gradient(135deg, #F4F4F6 0%, #E2E4EA 100%);
+  border-color: #B8BDC8 !important;
+}
+.reward-rank-silver svg {
+  stroke: #6B7280;
+}
+
+/* 金 — ゴールド */
+.reward-rank-gold {
+  background: linear-gradient(135deg, #FDF8E1 0%, #F5E49A 100%);
+  border-color: #D4AF37 !important;
+}
+.reward-rank-gold svg {
+  stroke: #B8860B;
+}
+
+/* 王冠 — プラチナ/クラウン */
+.reward-rank-platinum {
+  background: linear-gradient(135deg, #EDE8F5 0%, #D8CCEE 100%);
+  border-color: #9B7ED4 !important;
+}
+.reward-rank-platinum svg {
+  stroke: #6B3FA0;
+}
+
+/* 豪華エフェクトのトロフィーもランクカラーに上書き */
+.reward-cel-trophy.reward-rank-bronze {
+  background: linear-gradient(135deg, #F5CBA7 0%, #A0622A 100%);
+  box-shadow: 0 0 40px rgba(160, 98, 42, 0.5), 0 8px 24px rgba(0,0,0,0.3);
+}
+.reward-cel-trophy.reward-rank-silver {
+  background: linear-gradient(135deg, #E8EAF0 0%, #6B7280 100%);
+  box-shadow: 0 0 40px rgba(107, 114, 128, 0.5), 0 8px 24px rgba(0,0,0,0.3);
+}
+.reward-cel-trophy.reward-rank-gold {
+  background: linear-gradient(135deg, #F4D675 0%, #C5A059 50%, #9E7D3B 100%);
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), 0 8px 24px rgba(0,0,0,0.3);
+}
+.reward-cel-trophy.reward-rank-platinum {
+  background: linear-gradient(135deg, #C9B8E8 0%, #7B52C8 50%, #4A1FA8 100%);
+  box-shadow: 0 0 40px rgba(155, 126, 212, 0.6), 0 8px 24px rgba(0,0,0,0.3);
+}

@@ -41,9 +41,14 @@ let currentTab = 'home';
 let selectedRewardForExchange = null;
 let selectedTicketForUse = null;
 
-function initApp() {
+async function initApp() {
+  // Supabase 初期化・認証（スプラッシュ後に実行）
+  if (typeof initSupabase === 'function') {
+    await initSupabase();
+  }
+
   setupEventListeners();
-  renderApp();
+  await renderApp();
 
   if (window.qrManager) {
     window.qrManager.checkUrlParamsOnLoad();
@@ -241,7 +246,7 @@ function setupEventListeners() {
 /**
  * タブ切り替え
  */
-function switchTab(tabName) {
+async function switchTab(tabName) {
   currentTab = tabName;
 
   document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -252,28 +257,73 @@ function switchTab(tabName) {
     page.classList.toggle('active', page.id === `view-${tabName}`);
   });
 
-  renderApp();
+  await renderApp();
 }
 
 /**
  * 全体の描画
  */
-function renderApp(justStamped = false) {
-  renderStampCard(justStamped);
-  renderNextReward();
-  renderActiveTickets();
-  renderRewardList();
-  renderLotteryList();
+async function renderApp(justStamped = false) {
+  await renderStampCard(justStamped);
+  await renderNextReward();
+  await renderActiveTickets();
+  await renderRewardList();
+  await renderLotteryList();
 }
 
 window.renderApp = renderApp;
 
 /**
+ * リワードのランクアイコン情報を返す
+ * requiredStamps の値でランクを決定する
+ *   3  → 銅 (Bronze)
+ *   5  → 銀 (Silver)
+ *   7  → 金 (Gold)
+ *   10 → 王冠 (Platinum/Crown)
+ *   それ以外 → デフォルト（銅相当）
+ */
+function getRewardRank(requiredStamps) {
+  if (requiredStamps >= 10) {
+    return {
+      rank: 'platinum',
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 4l3 12h14l3-12-6 5-4-7-4 7-6-5z"></path>
+        <path d="M7 16v4M17 16v4M7 20h10"></path>
+      </svg>`
+    };
+  } else if (requiredStamps >= 7) {
+    return {
+      rank: 'gold',
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="6"></circle>
+        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+      </svg>`
+    };
+  } else if (requiredStamps >= 5) {
+    return {
+      rank: 'silver',
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+      </svg>`
+    };
+  } else {
+    return {
+      rank: 'bronze',
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M9 9h1.5a1.5 1.5 0 0 1 0 3H9v3h3"></path>
+        <path d="M15 9v6"></path>
+      </svg>`
+    };
+  }
+}
+
+/**
  * 1. スタンプカードの描画
  */
-function renderStampCard(justStamped = false) {
-  const currentStamps = window.storageManager.getStamps();
-  const angles = window.storageManager.getStampAngles();
+async function renderStampCard(justStamped = false) {
+  const currentStamps = await window.storageManager.getStamps();
+  const angles = await window.storageManager.getStampAngles();
   const grid = document.getElementById('stamp-grid');
   if (!grid) return;
 
@@ -310,8 +360,8 @@ function renderStampCard(justStamped = false) {
 /**
  * 2. 「次のリワード」の描画
  */
-function renderNextReward() {
-  const nextInfo = window.storageManager.getNextReward();
+async function renderNextReward() {
+  const nextInfo = await window.storageManager.getNextReward();
   const titleEl = document.getElementById('next-reward-title');
   const remainEl = document.getElementById('next-reward-remain-text');
   const avatarEl = document.getElementById('next-reward-avatar-img');
@@ -334,12 +384,12 @@ function renderNextReward() {
 /**
  * 2.5 保有中の特典チケットの描画
  */
-function renderActiveTickets() {
+async function renderActiveTickets() {
   const section = document.getElementById('active-tickets-section');
   const listEl = document.getElementById('active-tickets-list');
   if (!section || !listEl) return;
 
-  const tickets = window.storageManager.getTickets();
+  const tickets = await window.storageManager.getTickets();
   if (tickets.length === 0) {
     section.style.display = 'none';
     listEl.innerHTML = '';
@@ -349,7 +399,7 @@ function renderActiveTickets() {
   section.style.display = 'block';
   listEl.innerHTML = '';
 
-  tickets.forEach(ticket => {
+  for (const ticket of tickets) {
     const card = document.createElement('div');
     card.className = 'ticket-card';
     card.dataset.ticketId = ticket.id;
@@ -357,12 +407,13 @@ function renderActiveTickets() {
     const date = new Date(ticket.exchangedDate);
     const dateStr = `${date.getMonth()+1}/${date.getDate()} 交換済み`;
 
+    // リワードのスタンプ数からランクを取得
+    const rewardData = await window.storageManager.getRewardById(ticket.rewardId);
+    const rankInfo = getRewardRank(rewardData ? rewardData.requiredStamps : 0);
+
     card.innerHTML = `
-      <div class="ticket-thumb ticket-icon-thumb">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="8" r="6"></circle>
-          <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
-        </svg>
+      <div class="ticket-thumb ticket-icon-thumb reward-rank-${rankInfo.rank}">
+        ${rankInfo.svg}
       </div>
       <div class="ticket-body">
         <div class="ticket-title">${ticket.title}</div>
@@ -373,18 +424,18 @@ function renderActiveTickets() {
 
     card.querySelector('.ticket-use-btn').addEventListener('click', () => openUseTicketModal(ticket));
     listEl.appendChild(card);
-  });
+  }
 }
 
 /**
  * 3. リワード一覧画面の描画
  */
-function renderRewardList() {
+async function renderRewardList() {
   const listEl = document.getElementById('reward-card-list');
   if (!listEl) return;
 
-  const currentStamps = window.storageManager.getStamps();
-  const rewards = window.storageManager.getRewards();
+  const currentStamps = await window.storageManager.getStamps();
+  const rewards = await window.storageManager.getRewards();
 
   listEl.innerHTML = '';
 
@@ -393,6 +444,7 @@ function renderRewardList() {
     card.className = 'reward-card';
 
     const canExchange = currentStamps >= reward.requiredStamps;
+    const rankInfo = getRewardRank(reward.requiredStamps);
 
     let stampDotsHtml = '';
     for (let i = 0; i < reward.requiredStamps; i++) {
@@ -400,11 +452,8 @@ function renderRewardList() {
     }
 
     card.innerHTML = `
-      <div class="reward-card-thumb reward-card-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="8" r="6"></circle>
-          <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
-        </svg>
+      <div class="reward-card-thumb reward-card-icon reward-rank-${rankInfo.rank}">
+        ${rankInfo.svg}
       </div>
       <div class="reward-card-body">
         <div class="reward-item-title">${reward.title}</div>
@@ -424,11 +473,11 @@ function renderRewardList() {
 /**
  * 4. 抽選一覧の描画
  */
-function renderLotteryList() {
+async function renderLotteryList() {
   const listEl = document.getElementById('lottery-card-list');
   if (!listEl) return;
 
-  const lotteries = window.storageManager.getLotteries();
+  const lotteries = await window.storageManager.getLotteries();
   listEl.innerHTML = '';
 
   if (lotteries.length === 0) {
@@ -480,11 +529,11 @@ function renderLotteryList() {
 /**
  * リワード交換モーダルを開く
  */
-function openExchangeModal(rewardId) {
-  const reward = window.storageManager.getRewardById(rewardId);
+async function openExchangeModal(rewardId) {
+  const reward = await window.storageManager.getRewardById(rewardId);
   if (!reward) return;
 
-  const currentStamps = window.storageManager.getStamps();
+  const currentStamps = await window.storageManager.getStamps();
   if (currentStamps < reward.requiredStamps) {
     alert(`スタンプが足りません（必要: ${reward.requiredStamps}個 / 現在: ${currentStamps}個）\nスタンプを貯めて交換しよう！`);
     return;
@@ -495,10 +544,16 @@ function openExchangeModal(rewardId) {
   const modal = document.getElementById('exchange-confirm-modal');
   const titleEl = document.getElementById('exchange-reward-title');
   const descEl = document.getElementById('exchange-reward-desc');
+  const iconEl = document.getElementById('exchange-preview-icon-wrap');
 
   if (titleEl) titleEl.textContent = `「${reward.title}」と交換しますか？`;
   if (descEl) {
     descEl.innerHTML = `スタンプを <strong>${reward.requiredStamps}個</strong> 消費して特典と交換します。<br>交換後は履歴に保存されます。`;
+  }
+  if (iconEl) {
+    const rankInfo = getRewardRank(reward.requiredStamps);
+    iconEl.className = `exchange-reward-preview reward-icon-preview reward-rank-${rankInfo.rank}`;
+    iconEl.innerHTML = rankInfo.svg;
   }
 
   if (modal) modal.classList.add('show');
@@ -507,19 +562,29 @@ function openExchangeModal(rewardId) {
 /**
  * リワード交換の実行（豪華エフェクトに変更）
  */
-function executeRewardExchange() {
+async function executeRewardExchange() {
   if (!selectedRewardForExchange) return;
 
   const modal = document.getElementById('exchange-confirm-modal');
   if (modal) modal.classList.remove('show');
 
-  const res = window.storageManager.consumeStamps(selectedRewardForExchange.id);
+  const res = await window.storageManager.consumeStamps(selectedRewardForExchange.id);
   if (res.success) {
     const title = selectedRewardForExchange.title;
+    const stamps = selectedRewardForExchange.requiredStamps;
     selectedRewardForExchange = null;
-    window.showRewardCelebration(title, () => {
-      renderApp();
-      switchTab('home');
+
+    // 豪華エフェクトのトロフィーアイコンをランクに合わせて更新
+    const rankInfo = getRewardRank(stamps);
+    const trophyEl = document.querySelector('.reward-cel-trophy');
+    if (trophyEl) {
+      trophyEl.className = `reward-cel-trophy reward-rank-${rankInfo.rank}`;
+      trophyEl.innerHTML = rankInfo.svg;
+    }
+
+    window.showRewardCelebration(title, async () => {
+      await renderApp();
+      await switchTab('home');
     });
   } else {
     alert(res.message);
@@ -560,12 +625,12 @@ function executeTicketUse() {
   const ticketCard = document.querySelector(`.ticket-card[data-ticket-id="${ticketId}"]`);
   if (ticketCard) ticketCard.classList.add('using-out');
 
-  setTimeout(() => {
-    const res = window.storageManager.useTicket(ticketId);
+  setTimeout(async () => {
+    const res = await window.storageManager.useTicket(ticketId);
     if (res.success) {
       window.soundEffects.playStampSound();
       alert(`🎉「${ticketTitle}」を使用しました！\nチケットを消費し、履歴に記録しました✨`);
-      renderApp();
+      await renderApp();
     } else {
       alert(res.message);
     }
@@ -577,12 +642,12 @@ function executeTicketUse() {
 /**
  * ポイント履歴モーダルを開く
  */
-function openHistoryModal() {
+async function openHistoryModal() {
   const modal = document.getElementById('history-modal');
   const listEl = document.getElementById('history-items-list');
   if (!modal || !listEl) return;
 
-  const history = window.storageManager.getHistory();
+  const history = await window.storageManager.getHistory();
   listEl.innerHTML = '';
 
   if (history.length === 0) {
@@ -666,11 +731,11 @@ function submitAdminPassword() {
    管理モーダル
    ============================================================ */
 
-function openAdminModal() {
+async function openAdminModal() {
   const modal = document.getElementById('admin-modal');
   if (!modal) return;
-  renderAdminRewardEditList();
-  renderAdminLotteryList();
+  await renderAdminRewardEditList();
+  await renderAdminLotteryList();
   modal.classList.add('show');
 }
 
@@ -682,11 +747,11 @@ function closeAdminModal() {
 /**
  * リワード編集リスト描画
  */
-function renderAdminRewardEditList() {
+async function renderAdminRewardEditList() {
   const listEl = document.getElementById('admin-reward-edit-list');
   if (!listEl) return;
 
-  const rewards = window.storageManager.getRewards();
+  const rewards = await window.storageManager.getRewards();
   listEl.innerHTML = '';
 
   rewards.forEach(reward => {
@@ -705,13 +770,13 @@ function renderAdminRewardEditList() {
       </div>
     `;
 
-    row.querySelector('.reward-save-btn').addEventListener('click', () => {
+    row.querySelector('.reward-save-btn').addEventListener('click', async () => {
       const newTitle = row.querySelector('.reward-edit-title').value.trim();
       const newStamps = parseInt(row.querySelector('.reward-edit-stamps').value, 10);
       if (!newTitle) { alert('リワード名を入力してください'); return; }
       if (isNaN(newStamps) || newStamps < 1 || newStamps > 10) { alert('必要スタンプ数は1〜10で入力してください'); return; }
-      window.storageManager.updateReward(reward.id, { title: newTitle, requiredStamps: newStamps });
-      renderApp();
+      await window.storageManager.updateReward(reward.id, { title: newTitle, requiredStamps: newStamps });
+      await renderApp();
       // 行内に保存済み表示
       const btn = row.querySelector('.reward-save-btn');
       btn.textContent = '✓ 保存済';
@@ -726,11 +791,11 @@ function renderAdminRewardEditList() {
 /**
  * 抽選リスト描画（管理モーダル内）
  */
-function renderAdminLotteryList() {
+async function renderAdminLotteryList() {
   const listEl = document.getElementById('admin-lottery-list');
   if (!listEl) return;
 
-  const lotteries = window.storageManager.getLotteries();
+  const lotteries = await window.storageManager.getLotteries();
   listEl.innerHTML = '';
 
   if (lotteries.length === 0) {
@@ -754,11 +819,11 @@ function renderAdminLotteryList() {
     `;
 
     row.querySelector('.lot-edit-btn').addEventListener('click', () => openLotteryEditModal(lot));
-    row.querySelector('.lot-del-btn').addEventListener('click', () => {
+    row.querySelector('.lot-del-btn').addEventListener('click', async () => {
       if (confirm(`「${lot.title}」を削除しますか？`)) {
-        window.storageManager.deleteLottery(lot.id);
-        renderAdminLotteryList();
-        renderLotteryList();
+        await window.storageManager.deleteLottery(lot.id);
+        await renderAdminLotteryList();
+        await renderLotteryList();
       }
     });
 
@@ -802,7 +867,7 @@ function closeLotteryEditModal() {
   if (modal) modal.classList.remove('show');
 }
 
-function saveLotteryEdit() {
+async function saveLotteryEdit() {
   const id = document.getElementById('lottery-edit-id')?.value || '';
   const title = document.getElementById('lottery-edit-title')?.value.trim() || '';
   const url = document.getElementById('lottery-edit-url')?.value.trim() || '';
@@ -812,14 +877,14 @@ function saveLotteryEdit() {
   if (!url) { alert('URLを入力してください'); return; }
 
   if (id) {
-    window.storageManager.updateLottery(id, { title, url, deadline });
+    await window.storageManager.updateLottery(id, { title, url, deadline });
   } else {
-    window.storageManager.addLottery({ title, url, deadline });
+    await window.storageManager.addLottery({ title, url, deadline });
   }
 
   closeLotteryEditModal();
-  renderAdminLotteryList();
-  renderLotteryList();
+  await renderAdminLotteryList();
+  await renderLotteryList();
 }
 
 /* ============================================================
@@ -829,10 +894,10 @@ function saveLotteryEdit() {
 function setupAdminControls() {
   const addBtn = document.getElementById('admin-add-stamp-btn');
   if (addBtn) {
-    addBtn.addEventListener('click', () => {
-      const res = window.storageManager.addStamp('テストスタンプ付与');
+    addBtn.addEventListener('click', async () => {
+      const res = await window.storageManager.addStamp('テストスタンプ付与');
       if (res.success) {
-        window.showCelebration(() => renderApp(true));
+        window.showCelebration(async () => await renderApp(true));
       } else {
         alert(res.message);
       }
@@ -841,7 +906,7 @@ function setupAdminControls() {
 
   const fullBtn = document.getElementById('admin-full-stamp-btn');
   if (fullBtn) {
-    fullBtn.addEventListener('click', () => {
+    fullBtn.addEventListener('click', async () => {
       window.storageManager.setStamps(10);
       window.storageManager.addHistoryItem({
         id: 'hist-' + Date.now(),
@@ -850,7 +915,7 @@ function setupAdminControls() {
         amount: 10,
         date: new Date().toISOString()
       });
-      renderApp();
+      await renderApp();
       alert('スタンプを10個に設定しました！');
     });
   }
@@ -898,10 +963,10 @@ function setupAdminControls() {
 
   const resetBtn = document.getElementById('admin-reset-btn');
   if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
+    resetBtn.addEventListener('click', async () => {
       if (confirm('すべてのスタンプ・履歴データを初期状態にリセットしますか？')) {
         window.storageManager.resetAll();
-        renderApp();
+        await renderApp();
         alert('データを初期化しました。');
       }
     });
