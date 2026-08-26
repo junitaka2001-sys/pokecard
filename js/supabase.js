@@ -46,7 +46,11 @@ async function initSupabase() {
       console.log('Session restored:', window.currentUserId);
     } else {
       // セッションなし → Anonymous Auth でサインイン
-      await signInAnonymously();
+      // 既存のlocalStorageデータがある場合、移行処理が
+      // stamp_cardsを作成する。ここで先に空レコードを作ると
+      // migrateLegacyDataIfNeeded() が「移行済み」と誤判定する。
+      const hasLegacyData = localStorage.getItem('pokecard_stamps_v1') !== null;
+      await signInAnonymously(!hasLegacyData);
     }
 
     // localStorageデータの移行チェック（初回のみ）
@@ -63,7 +67,7 @@ async function initSupabase() {
 /**
  * Anonymous Auth でサインイン
  */
-async function signInAnonymously() {
+async function signInAnonymously(createInitialStampCard = true) {
   const { data, error } = await window.supabaseClient.auth.signInAnonymously();
 
   if (error) {
@@ -75,8 +79,11 @@ async function signInAnonymously() {
   window.currentUserIsAdmin = false;
   console.log('Anonymous user created:', window.currentUserId);
 
-  // stamp_cards の初期レコードを作成
-  await initStampCard(window.currentUserId);
+  // 新規ユーザーのみ初期レコードを作成する。既存データがある場合は
+  // 後続の migrateLegacyDataIfNeeded() がデータを引き継いで作成する。
+  if (createInitialStampCard) {
+    await initStampCard(window.currentUserId);
+  }
 }
 
 /**

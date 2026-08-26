@@ -1,5 +1,5 @@
 # POKECARD システム仕様書
-**Ver 2.1.0** — 最終更新: 2026-08-26
+**Ver 3.0.0** — 最終更新: 2026-08-26
 
 ---
 
@@ -213,3 +213,5 @@ https://[ドメイン]/index.html?stamp=1&token=pk_[base36timestamp]
 | 1.2.1 | iPhone Safari 最適化（dvh・overscroll・svh） |
 | 2.0.0 | 管理モード独立・リワード編集・抽選ページ・豪華リワードFX追加 |
 | 2.1.0 | Supabase管理者ログイン、リワード・抽選CRUD・利用者データ初期化のクラウド連携 |
+| 2.1.1 | 既存localStorageデータのSupabase移行時に、初期スタンプカード作成で移行がスキップされる問題を修正 |
+| 3.0.0 | Supabase移行完了。Service WorkerでSupabase通信をNetwork Onlyとし、オフライン時はキャッシュ閲覧中であることを表示 |

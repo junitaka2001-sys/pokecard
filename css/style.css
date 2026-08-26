@@ -1906,3 +1906,21 @@ button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
 .admin-login-status.is-success {
   color: #278A52;
 }
+
+/* オフライン状態表示 */
+.offline-status {
+  position: fixed;
+  z-index: 200;
+  top: max(8px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  padding: 9px 12px;
+  border: 1px solid #DFCDB2;
+  border-radius: var(--radius-sm);
+  background: #FFF8E8;
+  box-shadow: 0 4px 12px rgba(83, 63, 35, 0.14);
+  color: #795D2F;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}

@@ -10,8 +10,8 @@
 
 | 項目 | 状態 |
 |------|------|
-| バージョン | **2.1.0**（Supabase移行完了時に3.0.0へ） |
-| 実装フェーズ | **Supabase移行 Phase 4実装完了・Phase 5待ち** |
+| バージョン | **3.0.0** |
+| 実装フェーズ | **Supabase移行 Phase 6実装・ローカル検証完了／ダッシュボード確認待ち** |
 | 動作確認 | 実機未確認 |
 | デプロイ | 未デプロイ（ローカルファイルのみ） |
 
@@ -51,7 +51,7 @@
 
 ## 現在作業中の内容
 
-**Phase 4 のコード実装が完了。Phase 5（既存データ移行の確認）が次のタスク。**
+**Phase 6を実装し、ローカル検証を完了。Supabaseダッシュボードでの実データ確認が残っている。**
 
 管理モーダル内にSupabase管理者ログイン欄を追加。リワード編集・抽選CRUDは管理者セッションがある場合のみSupabaseへ反映し、失敗時はlocalStorageキャッシュを変更しない。初期化は利用者データのみをクラウドとローカルで初期化する。
 
@@ -80,14 +80,15 @@
 - [ ] Supabase SQL Editorで `used_tokens_user_delete` ポリシーを本番プロジェクトへ適用
 
 #### Phase 5（localStorage移行処理の確認）
-- [ ] `migrateLegacyData()` の動作テスト（既にsupabase.jsに実装済み）
-- [ ] Supabaseダッシュボードで移行後データ確認
+- [x] `migrateLegacyDataIfNeeded()` のローカル動作検証
+- [x] 既存localStorageデータがある新規匿名ユーザーで、初期`stamp_cards`作成が移行を妨げないよう修正
+- [ ] Supabaseダッシュボードで移行後データ確認（ブラウザで実機の既存データを移行後に実施）
 
-#### Phase 6（sw.js 調整・仕上げ）
-- [ ] `sw.js` に `supabase.js` 追加・`*.supabase.co` を Network Only 設定
-- [ ] `CACHE_NAME` を `'pokecard-v3.0.0'` に更新
-- [ ] オフライン時のエラー表示実装
-- [ ] バージョンバッジを `Ver 3.0.0` に更新・`SPEC.md` 変更履歴追記
+#### Phase 6（sw.js 調整・仕上げ）✅コード実装完了
+- [x] `sw.js` に `supabase.js` 追加・`*.supabase.co` を Network Only 設定
+- [x] `CACHE_NAME` を `'pokecard-v3.0.0'` に更新
+- [x] オフライン時にキャッシュ閲覧中・操作は接続後に行う旨を表示
+- [x] バージョンバッジを `Ver 3.0.0` に更新・`SPEC.md` 変更履歴追記
 
 #### Phase 7（実機確認）
 - [ ] はるかの iPhone Safari で全操作確認
@@ -169,10 +170,9 @@ UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール
 
 | # | 問題 | 影響度 | 状態 |
 |---|------|--------|------|
-| 1 | `sw.js` の `CACHE_NAME` が `'pokecard-v1.1.2'` のまま | 中 | Phase 6で対応 |
-| 2 | 実機動作未確認（Ver 2.0.0 + Supabase移行中） | 高 | Phase 7で確認 |
-| 3 | `images/rewards/*.svg` が未使用のまま残存 | 低 | 未対応 |
-| 4 | `used_tokens` のDELETEポリシーを本番Supabaseへ適用する必要がある | 中 | `supabase/phase0_setup.sql` に追記済み |
+| 1 | 実機動作未確認（Ver 3.0.0） | 高 | Phase 7で確認 |
+| 2 | `images/rewards/*.svg` が未使用のまま残存 | 低 | 未対応 |
+| 3 | `used_tokens` のDELETEポリシーを本番Supabaseへ適用する必要がある | 中 | `supabase/phase0_setup.sql` に追記済み |
 
 ---
 
@@ -203,5 +203,6 @@ UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール
 | `js/storage.js` | 2026-08-26 | Codex | リワード・抽選CRUDと利用者データ初期化にSupabase連携を追加。 |
 | `index.html` / `css/style.css` / `js/app.js` | 2026-08-26 | Codex | 管理者ログインUI、保存失敗表示、非同期初期化を追加。 |
 | `supabase/phase0_setup.sql` | 2026-08-26 | Codex | 使用済みトークンの利用者DELETEポリシーを追加。 |
+| `sw.js` / `index.html` / `js/app.js` / `css/style.css` / `SPEC.md` / `STATUS.md` | 2026-08-26 | Codex | Phase 6：Supabase通信をNetwork Only化し、オフライン状態表示と3.0.0更新を実施。 |
 
 **実機確認：未実施（Phase 7で実施予定）**

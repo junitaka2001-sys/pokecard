@@ -1,10 +1,11 @@
-const CACHE_NAME = 'pokecard-v2.1.0';
+const CACHE_NAME = 'pokecard-v3.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './css/style.css',
   './js/app.js',
   './js/storage.js',
+  './js/supabase.js',
   './js/stamp.js',
   './js/qr.js',
   './js/jsQR.min.js',
@@ -46,6 +47,15 @@ self.addEventListener('activate', (event) => {
 
 // Network First（オンライン時は常に最新を取得、オフライン時はキャッシュ）
 self.addEventListener('fetch', (event) => {
+  const requestUrl = new URL(event.request.url);
+
+  // SupabaseのAPI・認証通信はキャッシュせず、必ずネットワークへ送る。
+  // オフライン時はアプリ側がlocalStorageの読み取り専用モードに切り替える。
+  if (requestUrl.hostname.endsWith('.supabase.co')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {

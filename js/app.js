@@ -48,6 +48,7 @@ async function initApp() {
   }
 
   setupEventListeners();
+  updateOfflineStatus();
   await renderApp();
 
   if (window.qrManager) {
@@ -77,6 +78,9 @@ async function initApp() {
  * イベントリスナー設定
  */
 function setupEventListeners() {
+  window.addEventListener('online', updateOfflineStatus);
+  window.addEventListener('offline', updateOfflineStatus);
+
   // ナビゲーションタブ
   document.querySelectorAll('.nav-tab-btn').forEach(tab => {
     tab.addEventListener('click', () => switchTab(tab.dataset.tab));
@@ -246,6 +250,16 @@ function setupEventListeners() {
   }
 
   setupAdminControls();
+}
+
+/**
+ * オフライン時はlocalStorageのキャッシュを表示するため、
+ * 書き込みがクラウドへ反映されないことを常時明示する。
+ */
+function updateOfflineStatus() {
+  const status = document.getElementById('offline-status');
+  if (!status) return;
+  status.hidden = navigator.onLine;
 }
 
 /**
