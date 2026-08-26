@@ -240,6 +240,11 @@ function setupEventListeners() {
     addLotteryBtn.addEventListener('click', () => openLotteryEditModal(null));
   }
 
+  const adminLoginBtn = document.getElementById('admin-login-btn');
+  if (adminLoginBtn) {
+    adminLoginBtn.addEventListener('click', () => submitAdminLogin());
+  }
+
   setupAdminControls();
 }
 
@@ -736,6 +741,7 @@ async function openAdminModal() {
   if (!modal) return;
   await renderAdminRewardEditList();
   await renderAdminLotteryList();
+  updateAdminLoginStatus();
   modal.classList.add('show');
 }
 
@@ -775,7 +781,11 @@ async function renderAdminRewardEditList() {
       const newStamps = parseInt(row.querySelector('.reward-edit-stamps').value, 10);
       if (!newTitle) { alert('リワード名を入力してください'); return; }
       if (isNaN(newStamps) || newStamps < 1 || newStamps > 10) { alert('必要スタンプ数は1〜10で入力してください'); return; }
-      await window.storageManager.updateReward(reward.id, { title: newTitle, requiredStamps: newStamps });
+      const saved = await window.storageManager.updateReward(reward.id, { title: newTitle, requiredStamps: newStamps });
+      if (!saved) {
+        alert('保存できませんでした。Supabase管理者としてログインしてから、通信を確認してください。');
+        return;
+      }
       await renderApp();
       // 行内に保存済み表示
       const btn = row.querySelector('.reward-save-btn');
@@ -821,7 +831,11 @@ async function renderAdminLotteryList() {
     row.querySelector('.lot-edit-btn').addEventListener('click', () => openLotteryEditModal(lot));
     row.querySelector('.lot-del-btn').addEventListener('click', async () => {
       if (confirm(`「${lot.title}」を削除しますか？`)) {
-        await window.storageManager.deleteLottery(lot.id);
+        const deleted = await window.storageManager.deleteLottery(lot.id);
+        if (!deleted) {
+          alert('削除できませんでした。Supabase管理者としてログインしてから、通信を確認してください。');
+          return;
+        }
         await renderAdminLotteryList();
         await renderLotteryList();
       }
@@ -877,14 +891,61 @@ async function saveLotteryEdit() {
   if (!url) { alert('URLを入力してください'); return; }
 
   if (id) {
-    await window.storageManager.updateLottery(id, { title, url, deadline });
+    const updated = await window.storageManager.updateLottery(id, { title, url, deadline });
+    if (!updated) {
+      alert('保存できませんでした。Supabase管理者としてログインしてから、通信を確認してください。');
+      return;
+    }
   } else {
-    await window.storageManager.addLottery({ title, url, deadline });
+    const added = await window.storageManager.addLottery({ title, url, deadline });
+    if (!added) {
+      alert('追加できませんでした。Supabase管理者としてログインしてから、通信を確認してください。');
+      return;
+    }
   }
 
   closeLotteryEditModal();
   await renderAdminLotteryList();
   await renderLotteryList();
+}
+
+async function submitAdminLogin() {
+  const email = document.getElementById('admin-login-email')?.value.trim() || '';
+  const password = document.getElementById('admin-login-password')?.value || '';
+  const statusEl = document.getElementById('admin-login-status');
+
+  if (!email || !password) {
+    if (statusEl) statusEl.textContent = 'メールアドレスとパスワードを入力してください。';
+    return;
+  }
+  if (typeof window.signInAsAdmin !== 'function') {
+    if (statusEl) statusEl.textContent = 'Supabaseに接続できません。';
+    return;
+  }
+
+  if (statusEl) statusEl.textContent = 'ログイン中…';
+  const result = await window.signInAsAdmin(email, password);
+  if (!result.success) {
+    if (statusEl) statusEl.textContent = result.message;
+    return;
+  }
+
+  const passwordInput = document.getElementById('admin-login-password');
+  if (passwordInput) passwordInput.value = '';
+  updateAdminLoginStatus(result.message);
+  await renderApp();
+}
+
+function updateAdminLoginStatus(message = '') {
+  const statusEl = document.getElementById('admin-login-status');
+  if (!statusEl) return;
+  if (window.isAdminUser && window.isAdminUser()) {
+    statusEl.textContent = message || '管理者としてログイン済みです。';
+    statusEl.classList.add('is-success');
+  } else {
+    statusEl.textContent = message;
+    statusEl.classList.remove('is-success');
+  }
 }
 
 /* ============================================================
@@ -965,7 +1026,11 @@ function setupAdminControls() {
   if (resetBtn) {
     resetBtn.addEventListener('click', async () => {
       if (confirm('すべてのスタンプ・履歴データを初期状態にリセットしますか？')) {
-        window.storageManager.resetAll();
+        const reset = await window.storageManager.resetAll();
+        if (!reset) {
+          alert('初期化できませんでした。通信状態とSupabaseの権限設定を確認してください。');
+          return;
+        }
         await renderApp();
         alert('データを初期化しました。');
       }

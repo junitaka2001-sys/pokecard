@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokecard-v1.1.2';
+const CACHE_NAME = 'pokecard-v2.1.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

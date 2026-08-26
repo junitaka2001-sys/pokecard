@@ -16,6 +16,7 @@ const MIGRATION_FLAG_KEY = 'pokecard_migrated_to_supabase';
 // グローバル公開：storage.js・app.js から参照する
 window.supabaseClient = null;
 window.currentUserId = null;
+window.currentUserIsAdmin = false;
 
 /**
  * Supabase初期化・認証エントリポイント
@@ -41,6 +42,7 @@ async function initSupabase() {
     if (session?.user) {
       // セッションあり → そのまま使用
       window.currentUserId = session.user.id;
+      window.currentUserIsAdmin = session.user.app_metadata?.role === 'admin';
       console.log('Session restored:', window.currentUserId);
     } else {
       // セッションなし → Anonymous Auth でサインイン
@@ -70,6 +72,7 @@ async function signInAnonymously() {
   }
 
   window.currentUserId = data.user.id;
+  window.currentUserIsAdmin = false;
   console.log('Anonymous user created:', window.currentUserId);
 
   // stamp_cards の初期レコードを作成
@@ -140,9 +143,12 @@ async function signInAsAdmin(email, password) {
   if (role !== 'admin') {
     // 管理者権限なし → サインアウトして拒否
     await window.supabaseClient.auth.signOut();
+    window.currentUserId = null;
+    window.currentUserIsAdmin = false;
     return { success: false, message: '管理者権限がありません' };
   }
 
+  window.currentUserIsAdmin = true;
   return { success: true, message: '管理者としてログインしました' };
 }
 
@@ -151,16 +157,7 @@ async function signInAsAdmin(email, password) {
  * @returns {boolean}
  */
 function isAdminUser() {
-  if (!window.supabaseClient) return false;
-  const session = window.supabaseClient.auth.session?.();
-  // Supabase v2 では getSession() が非同期のため、キャッシュした値を使う
-  // signInAsAdmin 成功後は app_metadata がセッションに含まれる
-  try {
-    const jwt = window.supabaseClient.auth._session;
-    return jwt?.user?.app_metadata?.role === 'admin';
-  } catch {
-    return false;
-  }
+  return window.currentUserIsAdmin === true;
 }
 
 window.signInAsAdmin = signInAsAdmin;

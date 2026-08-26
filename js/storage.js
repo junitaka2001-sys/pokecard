@@ -140,6 +140,19 @@ class StorageManager {
   setStamps(count) {
     const safeCount = Math.max(0, Math.min(10, count));
     localStorage.setItem(STORAGE_KEYS.STAMPS, safeCount.toString());
+
+    // Supabase にも反映（バックグラウンド）
+    if (window.supabaseClient && window.currentUserId) {
+      window.supabaseClient
+        .from('stamp_cards')
+        .update({ stamps: safeCount })
+        .eq('user_id', window.currentUserId)
+        .then(({ error }) => {
+          if (error) console.warn('Supabase setStamps error:', error.message);
+        })
+        .catch(e => console.warn('Supabase setStamps catch:', e));
+    }
+
     return safeCount;
   }
 
@@ -249,6 +262,24 @@ class StorageManager {
     } catch {}
     tickets.unshift(ticket);
     this.setTickets(tickets);
+
+    // Supabase にも反映（バックグラウンド）
+    if (window.supabaseClient && window.currentUserId) {
+      window.supabaseClient
+        .from('tickets')
+        .insert({
+          id: ticket.id,
+          user_id: window.currentUserId,
+          reward_id: ticket.rewardId,
+          title: ticket.title,
+          description: ticket.description || null,
+          exchanged_at: ticket.exchangedDate,
+        })
+        .then(({ error }) => {
+          if (error) console.warn('Supabase addTicket error:', error.message);
+        })
+        .catch(e => console.warn('Supabase addTicket catch:', e));
+    }
   }
 
   // 特典チケットを使用（消化 ➔ 削除 ➔ 履歴記録）
@@ -268,7 +299,20 @@ class StorageManager {
     tickets.splice(targetIdx, 1);
     this.setTickets(tickets);
 
-    // 使用履歴を記録
+    // Supabase からも削除（バックグラウンド）
+    if (window.supabaseClient && window.currentUserId) {
+      window.supabaseClient
+        .from('tickets')
+        .delete()
+        .eq('id', ticketId)
+        .eq('user_id', window.currentUserId)
+        .then(({ error }) => {
+          if (error) console.warn('Supabase useTicket delete error:', error.message);
+        })
+        .catch(e => console.warn('Supabase useTicket catch:', e));
+    }
+
+    // 使用履歴を記録（addHistoryItem内でSupabaseにもINSERTされる）
     this.addHistoryItem({
       id: 'hist-use-' + Date.now(),
       type: 'reward_use',
@@ -392,6 +436,26 @@ class StorageManager {
     } catch {}
     history.unshift(item);
     localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+
+    // Supabase にも反映（バックグラウンド）
+    if (window.supabaseClient && window.currentUserId) {
+      window.supabaseClient
+        .from('history')
+        .insert({
+          id: item.id,
+          user_id: window.currentUserId,
+          type: item.type,
+          title: item.title,
+          amount: item.amount || 0,
+          reward_id: item.rewardId || null,
+          ticket_id: item.ticketId || null,
+          created_at: item.date,
+        })
+        .then(({ error }) => {
+          if (error) console.warn('Supabase addHistoryItem error:', error.message);
+        })
+        .catch(e => console.warn('Supabase addHistoryItem catch:', e));
+    }
   }
 
   setHistory(history) {
@@ -438,18 +502,73 @@ class StorageManager {
     } catch (e) {
       console.error(e);
     }
+
+    // Supabase にも反映（バックグラウンド）
+    if (window.supabaseClient && window.currentUserId) {
+      window.supabaseClient
+        .from('used_tokens')
+        .insert({
+          user_id: window.currentUserId,
+          token: token,
+        })
+        .then(({ error }) => {
+          // UNIQUE制約違反（重複INSERT）は正常なので無視
+          if (error && !error.message.includes('duplicate')) {
+            console.warn('Supabase markTokenUsed error:', error.message);
+          }
+        })
+        .catch(e => console.warn('Supabase markTokenUsed catch:', e));
+    }
   }
 
   // 全リセット（テスト用）
-  resetAll() {
+  async resetAll() {
+    if (window.supabaseClient && window.currentUserId) {
+      const resetDate = new Date().toISOString();
+      const resetHistory = {
+        id: 'hist-reset-' + Date.now(),
+        user_id: window.currentUserId,
+        type: 'stamp_add',
+        title: 'カード発行記念スタンプ',
+        amount: 3,
+        created_at: resetDate
+      };
+
+      try {
+        const { error: ticketsError } = await window.supabaseClient
+          .from('tickets').delete().eq('user_id', window.currentUserId);
+        if (ticketsError) throw ticketsError;
+
+        const { error: historyError } = await window.supabaseClient
+          .from('history').delete().eq('user_id', window.currentUserId);
+        if (historyError) throw historyError;
+
+        const { error: tokensError } = await window.supabaseClient
+          .from('used_tokens').delete().eq('user_id', window.currentUserId);
+        if (tokensError) throw tokensError;
+
+        const { error: stampError } = await window.supabaseClient
+          .from('stamp_cards')
+          .update({ stamps: 3 })
+          .eq('user_id', window.currentUserId);
+        if (stampError) throw stampError;
+
+        const { error: resetHistoryError } = await window.supabaseClient
+          .from('history').insert(resetHistory);
+        if (resetHistoryError) throw resetHistoryError;
+      } catch (e) {
+        console.warn('Supabase resetAll error:', e.message || e);
+        return false;
+      }
+    }
+
     localStorage.removeItem(STORAGE_KEYS.STAMPS);
     localStorage.removeItem(STORAGE_KEYS.HISTORY);
-    localStorage.removeItem(STORAGE_KEYS.REWARDS);
     localStorage.removeItem(STORAGE_KEYS.TICKETS);
     localStorage.removeItem(STORAGE_KEYS.USED_TOKENS);
     localStorage.removeItem(STORAGE_KEYS.STAMP_ANGLES);
-    localStorage.removeItem(STORAGE_KEYS.LOTTERIES);
     this.init();
+    return true;
   }
 
   // --- リワード更新 ---
@@ -457,7 +576,25 @@ class StorageManager {
     const rewards = await this.getRewards();
     const idx = rewards.findIndex(r => r.id === id);
     if (idx === -1) return false;
-    rewards[idx] = { ...rewards[idx], ...fields };
+
+    const updatedReward = { ...rewards[idx], ...fields };
+    if (window.supabaseClient) {
+      if (!window.isAdminUser || !window.isAdminUser()) return false;
+      const { error } = await window.supabaseClient
+        .from('rewards')
+        .update({
+          title: updatedReward.title,
+          required_stamps: updatedReward.requiredStamps,
+          description: updatedReward.description || null
+        })
+        .eq('id', id);
+      if (error) {
+        console.warn('Supabase updateReward error:', error.message);
+        return false;
+      }
+    }
+
+    rewards[idx] = updatedReward;
     this.setRewards(rewards);
     return true;
   }
@@ -504,6 +641,17 @@ class StorageManager {
       url: lottery.url || '',
       deadline: lottery.deadline || ''
     };
+    if (window.supabaseClient) {
+      if (!window.isAdminUser || !window.isAdminUser()) return null;
+      const { error } = await window.supabaseClient
+        .from('lotteries')
+        .insert({ id: item.id, title: item.title, url: item.url, deadline: item.deadline || null });
+      if (error) {
+        console.warn('Supabase addLottery error:', error.message);
+        return null;
+      }
+    }
+
     list.unshift(item);
     this.setLotteries(list);
     return item;
@@ -513,15 +661,41 @@ class StorageManager {
     const list = await this.getLotteries();
     const idx = list.findIndex(l => l.id === id);
     if (idx === -1) return false;
-    list[idx] = { ...list[idx], ...fields };
+    const updatedLottery = { ...list[idx], ...fields };
+    if (window.supabaseClient) {
+      if (!window.isAdminUser || !window.isAdminUser()) return false;
+      const { error } = await window.supabaseClient
+        .from('lotteries')
+        .update({
+          title: updatedLottery.title,
+          url: updatedLottery.url,
+          deadline: updatedLottery.deadline || null
+        })
+        .eq('id', id);
+      if (error) {
+        console.warn('Supabase updateLottery error:', error.message);
+        return false;
+      }
+    }
+
+    list[idx] = updatedLottery;
     this.setLotteries(list);
     return true;
   }
 
   async deleteLottery(id) {
     const list = await this.getLotteries();
+    if (window.supabaseClient) {
+      if (!window.isAdminUser || !window.isAdminUser()) return false;
+      const { error } = await window.supabaseClient.from('lotteries').delete().eq('id', id);
+      if (error) {
+        console.warn('Supabase deleteLottery error:', error.message);
+        return false;
+      }
+    }
     const filtered = list.filter(l => l.id !== id);
     this.setLotteries(filtered);
+    return true;
   }
 }
 

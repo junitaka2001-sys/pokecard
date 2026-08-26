@@ -2,7 +2,7 @@
 
 このファイルはAIエージェント間の引き継ぎ用です。作業完了のたびに更新してください。
 
-**最終更新: 2026-08-23 / 更新者: Antigravity**
+**最終更新: 2026-08-26 (Phase 4実装完了) / 更新者: Codex**
 
 ---
 
@@ -10,8 +10,8 @@
 
 | 項目 | 状態 |
 |------|------|
-| バージョン | **2.0.0**（Supabase移行完了時に3.0.0へ） |
-| 実装フェーズ | **Supabase移行 Phase 2完了・Phase 3待ち** |
+| バージョン | **2.1.0**（Supabase移行完了時に3.0.0へ） |
+| 実装フェーズ | **Supabase移行 Phase 4実装完了・Phase 5待ち** |
 | 動作確認 | 実機未確認 |
 | デプロイ | 未デプロイ（ローカルファイルのみ） |
 
@@ -45,38 +45,39 @@
 - [x] **Phase 0完了**：Supabaseプロジェクト作成・テーブル作成・RLS設定・Anonymous Auth有効化・管理者アカウント設定
 - [x] **Phase 1完了**：`js/supabase.js` 新規作成・`index.html` CDN追加・`app.js` async化
 - [x] **Phase 2完了**：`js/storage.js` 読み取り系Supabase移行・localStorageキャッシュ・`app.js`/`qr.js` 非同期対応
+- [x] **Phase 3完了**：`js/storage.js` 書き込み系Supabase移行（setStamps/addHistoryItem/addTicket/useTicket/markTokenUsed）
 
 ---
 
 ## 現在作業中の内容
 
-**Phase 3（storage.js 書き込み系のSupabase移行）が次のタスク。**
+**Phase 4 のコード実装が完了。Phase 5（既存データ移行の確認）が次のタスク。**
 
-Phase 2まで完了。`storage.js` の読み取り系はSupabase SELECT + localStorageキャッシュへ移行済み。
-`app.js` の描画系および `qr.js` の読み取り処理も `async/await` に対応。
-書き込み系（`addStamp`, `consumeStamps`, `useTicket`, `markTokenUsed` 等）のSupabase連携は未着手（localStorageのみ更新）。
+管理モーダル内にSupabase管理者ログイン欄を追加。リワード編集・抽選CRUDは管理者セッションがある場合のみSupabaseへ反映し、失敗時はlocalStorageキャッシュを変更しない。初期化は利用者データのみをクラウドとローカルで初期化する。
 
 ---
 
 ## 次に行うべき作業
 
-### Supabase移行フェーズ（Phase 3から再開）
+### Supabase移行フェーズ（Phase 4から再開）
 
-#### Phase 3（storage.js 書き込み系）★次のタスク
-- [ ] `addStamp()` → Supabase UPDATE(stamp_cards) + INSERT(history)
-- [ ] `consumeStamps()` → Supabase UPDATE + INSERT(tickets) + INSERT(history)
-- [ ] `useTicket()` → Supabase DELETE(tickets) + INSERT(history)
-- [ ] `markTokenUsed()` → Supabase INSERT(used_tokens)
-- [ ] `setStamps()` → Supabase UPDATE（管理者操作用）
-- [ ] `setStamps()` → Supabase UPDATE（管理者操作用）
-- [ ] `qr.js` の `handleScannedData()` / `checkUrlParamsOnLoad()` を async 化
+#### Phase 3（storage.js 書き込み系）✅完了
+- [x] `addStamp()` → 内部の `setStamps()` + `addHistoryItem()` 経由でSupabase反映
+- [x] `consumeStamps()` → 内部の `setStamps()` + `addTicket()` + `addHistoryItem()` 経由でSupabase反映
+- [x] `useTicket()` → Supabase DELETE(tickets) + `addHistoryItem()` 経由でINSERT(history)
+- [x] `markTokenUsed()` → Supabase INSERT(used_tokens)
+- [x] `setStamps()` → Supabase UPDATE(stamp_cards)
+- [x] `addTicket()` → Supabase INSERT(tickets)
+- [x] `addHistoryItem()` → Supabase INSERT(history)
+- [x] `qr.js` の `handleScannedData()` / `checkUrlParamsOnLoad()` → Phase 2で async 化済み
 
-#### Phase 4（管理者機能の移行）
-- [ ] 管理モードに「管理者ログイン」ボタン追加（`signInAsAdmin()` を呼ぶ）
-- [ ] `updateReward()` → Supabase UPDATE(rewards)
-- [ ] `addLottery()` / `updateLottery()` / `deleteLottery()` → Supabase CRUD
-- [ ] `resetAll()` のSupabase対応
-- [ ] `app.js` の管理系関数を async 化
+#### Phase 4（管理者機能の移行）✅コード実装完了
+- [x] 管理モードに「管理者ログイン」ボタン追加（`signInAsAdmin()` を呼ぶ）
+- [x] `updateReward()` → Supabase UPDATE(rewards)
+- [x] `addLottery()` / `updateLottery()` / `deleteLottery()` → Supabase CRUD
+- [x] `resetAll()` のSupabase対応
+- [x] `app.js` の管理系関数を async 化
+- [ ] Supabase SQL Editorで `used_tokens_user_delete` ポリシーを本番プロジェクトへ適用
 
 #### Phase 5（localStorage移行処理の確認）
 - [ ] `migrateLegacyData()` の動作テスト（既にsupabase.jsに実装済み）
@@ -171,7 +172,7 @@ UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール
 | 1 | `sw.js` の `CACHE_NAME` が `'pokecard-v1.1.2'` のまま | 中 | Phase 6で対応 |
 | 2 | 実機動作未確認（Ver 2.0.0 + Supabase移行中） | 高 | Phase 7で確認 |
 | 3 | `images/rewards/*.svg` が未使用のまま残存 | 低 | 未対応 |
-| 4 | `isAdminUser()` 関数のセッション参照方法が暫定実装 | 中 | Phase 4で正式実装 |
+| 4 | `used_tokens` のDELETEポリシーを本番Supabaseへ適用する必要がある | 中 | `supabase/phase0_setup.sql` に追記済み |
 
 ---
 
@@ -198,8 +199,9 @@ UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール
 
 | ファイル | 変更日 | 変更者 | 概要 |
 |----------|--------|--------|------|
-| `js/storage.js` | 2026-08-23 | Antigravity | 読み取り系メソッド（getRewards, getLotteries, getStamps, getStampAngles, getTickets, getHistory, isTokenUsed 等）を async 化し、Supabase SELECT と localStorage キャッシュを追加 |
-| `js/app.js` | 2026-08-23 | Antigravity | 描画系・モーダル系・管理系の読み取り呼び出し元をすべて async/await に対応 |
-| `js/qr.js` | 2026-08-23 | Antigravity | `checkUrlParamsOnLoad()` と `handleScannedData()` のトークン検証・スタンプ付与を async/await に対応 |
+| `js/supabase.js` | 2026-08-26 | Codex | 管理者ロールをセッション復元時・ログイン時に明示的に保持するよう修正。 |
+| `js/storage.js` | 2026-08-26 | Codex | リワード・抽選CRUDと利用者データ初期化にSupabase連携を追加。 |
+| `index.html` / `css/style.css` / `js/app.js` | 2026-08-26 | Codex | 管理者ログインUI、保存失敗表示、非同期初期化を追加。 |
+| `supabase/phase0_setup.sql` | 2026-08-26 | Codex | 使用済みトークンの利用者DELETEポリシーを追加。 |
 
 **実機確認：未実施（Phase 7で実施予定）**

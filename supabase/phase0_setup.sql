@@ -147,6 +147,9 @@ CREATE POLICY "used_tokens_user_select" ON used_tokens
 CREATE POLICY "used_tokens_user_insert" ON used_tokens
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+CREATE POLICY "used_tokens_user_delete" ON used_tokens
+  FOR DELETE USING (auth.uid() = user_id);
+
 -- ---- rewards（マスタ：全員読み取り可・管理者のみ書き込み可）----
 CREATE POLICY "rewards_all_select" ON rewards
   FOR SELECT USING (true);

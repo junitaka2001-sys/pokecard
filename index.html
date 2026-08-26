@@ -134,7 +134,7 @@
 
         <!-- バージョン識別表示 -->
         <div class="version-badge-container">
-          <span class="version-badge">Ver 2.0.0 (Admin Panel, Lottery, Reward FX)</span>
+          <span class="version-badge">Ver 2.1.0 (Supabase Admin)</span>
         </div>
       </section>
 
@@ -354,6 +354,17 @@
       <div class="modal-header">
         <div class="modal-title">🛠️ 管理＆テストモード</div>
         <button class="modal-close-btn" id="admin-modal-close-btn" aria-label="閉じる">✕</button>
+      </div>
+
+      <!-- Supabase管理者ログイン -->
+      <div class="admin-section">
+        <div class="admin-section-title">Supabase管理者ログイン</div>
+        <div class="admin-login-fields">
+          <input type="email" id="admin-login-email" class="admin-form-input" placeholder="メールアドレス" autocomplete="username">
+          <input type="password" id="admin-login-password" class="admin-form-input" placeholder="Supabaseパスワード" autocomplete="current-password">
+        </div>
+        <button id="admin-login-btn" class="admin-btn" type="button">管理者ログイン</button>
+        <div id="admin-login-status" class="admin-login-status" aria-live="polite"></div>
       </div>
 
       <!-- スタンプ操作 -->
