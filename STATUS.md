@@ -2,7 +2,7 @@
 
 このファイルはAIエージェント間の引き継ぎ用です。作業完了のたびに更新してください。
 
-**最終更新: 2026-08-26 (Phase 4実装完了) / 更新者: Codex**
+**最終更新: 2026-08-26 (Phase 7ダッシュボード確認・RLS適用完了) / 更新者: Codex**
 
 ---
 
@@ -11,7 +11,7 @@
 | 項目 | 状態 |
 |------|------|
 | バージョン | **3.0.0** |
-| 実装フェーズ | **Supabase移行 Phase 6実装・ローカル検証完了／ダッシュボード確認待ち** |
+| 実装フェーズ | **Supabase移行 Phase 7確認中／実機動作確認待ち** |
 | 動作確認 | 実機未確認 |
 | デプロイ | 未デプロイ（ローカルファイルのみ） |
 
@@ -51,7 +51,7 @@
 
 ## 現在作業中の内容
 
-**Phase 6を実装し、ローカル検証を完了。Supabaseダッシュボードでの実データ確認が残っている。**
+**Phase 7のSupabaseダッシュボード確認を完了。6テーブル・管理者ロール・初期リワード4件を確認し、`used_tokens_user_delete` ポリシーを本番環境へ適用済み。**
 
 管理モーダル内にSupabase管理者ログイン欄を追加。リワード編集・抽選CRUDは管理者セッションがある場合のみSupabaseへ反映し、失敗時はlocalStorageキャッシュを変更しない。初期化は利用者データのみをクラウドとローカルで初期化する。
 
@@ -77,7 +77,7 @@
 - [x] `addLottery()` / `updateLottery()` / `deleteLottery()` → Supabase CRUD
 - [x] `resetAll()` のSupabase対応
 - [x] `app.js` の管理系関数を async 化
-- [ ] Supabase SQL Editorで `used_tokens_user_delete` ポリシーを本番プロジェクトへ適用
+- [x] Supabase SQL Editorで `used_tokens_user_delete` ポリシーを本番プロジェクトへ適用・確認
 
 #### Phase 5（localStorage移行処理の確認）
 - [x] `migrateLegacyDataIfNeeded()` のローカル動作検証
@@ -91,6 +91,7 @@
 - [x] バージョンバッジを `Ver 3.0.0` に更新・`SPEC.md` 変更履歴追記
 
 #### Phase 7（実機確認）
+- [x] Supabaseダッシュボードへサインインし、テーブル・ポリシー・実データを確認
 - [ ] はるかの iPhone Safari で全操作確認
 - [ ] 小室の端末で管理者操作全確認
 - [ ] QR発行 → はるかが読み取り → Supabase反映確認
@@ -172,7 +173,6 @@ UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール
 |---|------|--------|------|
 | 1 | 実機動作未確認（Ver 3.0.0） | 高 | Phase 7で確認 |
 | 2 | `images/rewards/*.svg` が未使用のまま残存 | 低 | 未対応 |
-| 3 | `used_tokens` のDELETEポリシーを本番Supabaseへ適用する必要がある | 中 | `supabase/phase0_setup.sql` に追記済み |
 
 ---
 
