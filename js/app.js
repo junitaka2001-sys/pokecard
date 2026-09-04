@@ -489,60 +489,157 @@ async function renderRewardList() {
   });
 }
 
+/* ============================================================
+   ステータス定義
+   ============================================================ */
+
+const LOTTERY_STATUS_CONFIG = {
+  pending: { label: '未完了',   color: 'status-pending',  icon: '○' },
+  applied: { label: '応募済',   color: 'status-applied',  icon: '✓' },
+  won:     { label: '当選！',   color: 'status-won',      icon: '★' },
+  lost:    { label: '落選',     color: 'status-lost',     icon: '✕' },
+  paid:    { label: '支払済',   color: 'status-paid',     icon: '💰' }
+};
+
+// ステータス変更の遷移順（タップで次のステータスへ）
+const STATUS_CYCLE = ['pending', 'applied', 'won', 'lost', 'paid'];
+
+/** 抽選カードの期限文字列を生成 */
+function buildDeadlineHtml(lot) {
+  if (!lot.deadline) return '';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dl = new Date(lot.deadline + 'T00:00:00');
+  const isExpired = dl < today;
+  const dlStr = `${dl.getMonth()+1}/${dl.getDate()}`;
+  return `<div class="lottery-deadline ${isExpired ? 'expired' : ''}">締切: ${dlStr}${isExpired ? '（終了）' : ''}</div>`;
+}
+
+/** 抽選カード1枚のDOM要素を生成して返す */
+function buildLotteryCard(lot) {
+  const cfg = LOTTERY_STATUS_CONFIG[lot.status] || LOTTERY_STATUS_CONFIG.pending;
+  const deadlineHtml = buildDeadlineHtml(lot);
+
+  const card = document.createElement('div');
+  card.className = `lottery-card lottery-card--${lot.status}`;
+  card.dataset.lotteryId = lot.id;
+
+  card.innerHTML = `
+    <div class="lottery-card-main">
+      <div class="lottery-card-body">
+        <div class="lottery-title">${lot.title}</div>
+        ${deadlineHtml}
+      </div>
+      <a href="${lot.url}" target="_blank" rel="noopener" class="lottery-apply-btn" aria-label="${lot.title}に応募する">
+        応募する ›
+      </a>
+    </div>
+    <div class="lottery-status-row">
+      <span class="lottery-status-label">ステータス:</span>
+      <div class="lottery-status-pills" role="group" aria-label="ステータス変更">
+        ${STATUS_CYCLE.map(s => {
+          const sc = LOTTERY_STATUS_CONFIG[s];
+          return `<button
+            class="lottery-status-pill ${s === lot.status ? 'active' : ''} pill-${s}"
+            data-status="${s}"
+            type="button"
+            aria-pressed="${s === lot.status ? 'true' : 'false'}"
+          >${sc.icon} ${sc.label}</button>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  // ステータスボタンのイベント
+  card.querySelectorAll('.lottery-status-pill').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newStatus = btn.dataset.status;
+      if (newStatus === lot.status) return;
+      const ok = await window.storageManager.setLotteryStatus(lot.id, newStatus);
+      if (ok) {
+        lot.status = newStatus;
+        // カードを再構築して置き換え
+        const newCard = buildLotteryCard(lot);
+        card.replaceWith(newCard);
+        // 当選・落選・支払済への変更はセクション再描画が必要
+        if (['won', 'lost', 'paid', 'pending'].includes(newStatus)) {
+          await renderLotteryList();
+        }
+      } else {
+        alert('ステータスの更新に失敗しました。通信状態を確認してください。');
+      }
+    });
+  });
+
+  return card;
+}
+
+/** セクション（折りたたみ）要素を生成して返す */
+function buildLotterySection(sectionId, title, lots, defaultOpen = true) {
+  const section = document.createElement('div');
+  section.className = 'lottery-section';
+  section.dataset.section = sectionId;
+
+  const header = document.createElement('button');
+  header.className = `lottery-section-header ${defaultOpen ? 'open' : ''}`;
+  header.type = 'button';
+  header.setAttribute('aria-expanded', defaultOpen ? 'true' : 'false');
+  header.innerHTML = `
+    <span class="lottery-section-title">${title}</span>
+    <span class="lottery-section-count">${lots.length}件</span>
+    <span class="lottery-section-arrow">›</span>
+  `;
+
+  const body = document.createElement('div');
+  body.className = `lottery-section-body ${defaultOpen ? 'open' : ''}`;
+
+  if (lots.length === 0) {
+    body.innerHTML = '<div class="lottery-empty-sub">該当する抽選はありません</div>';
+  } else {
+    lots.forEach(lot => body.appendChild(buildLotteryCard(lot)));
+  }
+
+  header.addEventListener('click', () => {
+    const isOpen = header.classList.toggle('open');
+    body.classList.toggle('open', isOpen);
+    header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+
+  section.appendChild(header);
+  section.appendChild(body);
+  return section;
+}
+
 /**
- * 4. 抽選一覧の描画
+ * 4. 抽選一覧の描画（3セクション構成）
+ *   セクション1: 当選  (status = 'won')
+ *   セクション2: 進行中 (status = 'pending' | 'applied')
+ *   セクション3: 応募履歴 (status = 'lost' | 'paid') ← 折りたたみ、デフォルト閉じ
  */
 async function renderLotteryList() {
   const listEl = document.getElementById('lottery-card-list');
   if (!listEl) return;
 
-  const lotteries = await window.storageManager.getLotteries();
+  const lots = await window.storageManager.getLotteriesWithStatus();
   listEl.innerHTML = '';
 
-  if (lotteries.length === 0) {
-    listEl.innerHTML = '<div class="lottery-empty">現在開催中の抽選はありません</div>';
+  if (lots.length === 0) {
+    listEl.innerHTML = '<div class="lottery-empty">現在登録されている抽選はありません</div>';
     return;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const won     = lots.filter(l => l.status === 'won');
+  const active  = lots.filter(l => l.status === 'pending' || l.status === 'applied');
+  const history = lots.filter(l => l.status === 'lost' || l.status === 'paid');
 
-  lotteries.forEach(lot => {
-    const card = document.createElement('div');
-    card.className = 'lottery-card';
+  // セクション1: 当選（常に表示、デフォルト展開）
+  listEl.appendChild(buildLotterySection('won', '🏆 当選した抽選', won, true));
 
-    let deadlineHtml = '';
-    let isExpired = false;
-    if (lot.deadline) {
-      const dl = new Date(lot.deadline + 'T00:00:00');
-      isExpired = dl < today;
-      const dlStr = `${dl.getMonth()+1}/${dl.getDate()}`;
-      deadlineHtml = `<div class="lottery-deadline ${isExpired ? 'expired' : ''}">
-        締切: ${dlStr}${isExpired ? '（終了）' : ''}
-      </div>`;
-    }
+  // セクション2: 進行中（デフォルト展開）
+  listEl.appendChild(buildLotterySection('active', '📋 応募中の抽選', active, true));
 
-    card.innerHTML = `
-      <div class="lottery-card-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 12 20 22 4 22 4 12"></polyline>
-          <rect x="2" y="7" width="20" height="5"></rect>
-          <line x1="12" y1="22" x2="12" y2="7"></line>
-          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
-          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
-        </svg>
-      </div>
-      <div class="lottery-card-body">
-        <div class="lottery-title">${lot.title}</div>
-        ${deadlineHtml}
-      </div>
-      <a href="${lot.url}" target="_blank" rel="noopener" class="lottery-link-btn ${isExpired ? 'expired' : ''}">
-        応募する ›
-      </a>
-    `;
-
-    listEl.appendChild(card);
-  });
+  // セクション3: 応募履歴（デフォルト折りたたみ）
+  const historySection = buildLotterySection('history', '📜 応募履歴', history, false);
+  listEl.appendChild(historySection);
 }
 
 /**
@@ -819,28 +916,53 @@ async function renderAdminLotteryList() {
   const listEl = document.getElementById('admin-lottery-list');
   if (!listEl) return;
 
-  const lotteries = await window.storageManager.getLotteries();
+  const lots = await window.storageManager.getLotteriesWithStatus();
   listEl.innerHTML = '';
 
-  if (lotteries.length === 0) {
+  if (lots.length === 0) {
     listEl.innerHTML = '<div style="font-size:12px;color:#A8A095;padding:4px 0;">抽選はまだありません</div>';
     return;
   }
 
-  lotteries.forEach(lot => {
+  lots.forEach(lot => {
     const row = document.createElement('div');
     row.className = 'admin-lottery-row';
     const dl = lot.deadline ? lot.deadline : '未設定';
+    const cfg = LOTTERY_STATUS_CONFIG[lot.status] || LOTTERY_STATUS_CONFIG.pending;
+
+    const statusOptions = STATUS_CYCLE.map(s => {
+      const sc = LOTTERY_STATUS_CONFIG[s];
+      return `<option value="${s}" ${s === lot.status ? 'selected' : ''}>${sc.icon} ${sc.label}</option>`;
+    }).join('');
+
     row.innerHTML = `
       <div class="admin-lottery-row-info">
         <div class="admin-lottery-row-title">${lot.title}</div>
         <div class="admin-lottery-row-meta">締切: ${dl}</div>
+      </div>
+      <div class="admin-lottery-row-status">
+        <select class="admin-status-select lot-status-select" aria-label="ステータス変更">
+          ${statusOptions}
+        </select>
       </div>
       <div class="admin-lottery-row-btns">
         <button class="admin-btn lot-edit-btn" type="button">編集</button>
         <button class="admin-btn danger lot-del-btn" type="button">削除</button>
       </div>
     `;
+
+    // ステータス変更
+    row.querySelector('.lot-status-select').addEventListener('change', async (e) => {
+      const newStatus = e.target.value;
+      const ok = await window.storageManager.setLotteryStatus(lot.id, newStatus);
+      if (ok) {
+        lot.status = newStatus;
+        await renderLotteryList();
+      } else {
+        alert('ステータスの更新に失敗しました。通信状態を確認してください。');
+        e.target.value = lot.status; // 元に戻す
+      }
+    });
 
     row.querySelector('.lot-edit-btn').addEventListener('click', () => openLotteryEditModal(lot));
     row.querySelector('.lot-del-btn').addEventListener('click', async () => {
@@ -1051,3 +1173,56 @@ function setupAdminControls() {
     });
   }
 }
+
+/* ============================================================
+   応募履歴モーダル
+   ============================================================ */
+
+/**
+ * 応募履歴モーダルを開く
+ * 対象: status が 'lost' または 'paid' の抽選
+ */
+async function openLotteryHistoryModal() {
+  const modal = document.getElementById('lottery-history-modal');
+  const listEl = document.getElementById('lottery-history-list');
+  if (!modal || !listEl) return;
+
+  const lots = await window.storageManager.getLotteriesWithStatus();
+  const historyLots = lots.filter(l => l.status === 'lost' || l.status === 'paid');
+
+  listEl.innerHTML = '';
+
+  if (historyLots.length === 0) {
+    listEl.innerHTML = '<div class="history-empty">まだ応募履歴はありません</div>';
+  } else {
+    historyLots.forEach(lot => {
+      const cfg = LOTTERY_STATUS_CONFIG[lot.status];
+      const deadlineHtml = lot.deadline
+        ? `<div class="history-item-date">締切: ${lot.deadline}</div>`
+        : '';
+
+      const div = document.createElement('div');
+      div.className = 'history-item lottery-history-item';
+      div.innerHTML = `
+        <div class="history-item-left">
+          <div class="history-item-label">${lot.title}</div>
+          ${deadlineHtml}
+        </div>
+        <div class="history-item-badge ${cfg.color}">${cfg.icon} ${cfg.label}</div>
+      `;
+      listEl.appendChild(div);
+    });
+  }
+
+  modal.classList.add('show');
+}
+
+// 応募履歴ボタンのイベントリスナーを setupEventListeners から呼べるよう追加
+(function attachLotteryHistoryListener() {
+  // DOMContentLoaded 後に実行済みの場合も考慮して document 監視で対応
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#lottery-history-btn')) {
+      openLotteryHistoryModal();
+    }
+  });
+})();

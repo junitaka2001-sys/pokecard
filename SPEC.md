@@ -1,5 +1,5 @@
 # POKECARD システム仕様書
-**Ver 3.0.0** — 最終更新: 2026-08-26
+**Ver 3.1.0** — 最終更新: 2026-09-03
 
 ---
 
@@ -48,6 +48,7 @@ pokecard/
 | `pokecard_used_tokens_v1` | JSON array | 使用済みQRトークン |
 | `pokecard_stamp_angles_v1` | JSON array | スタンプマスの傾き角度 |
 | `pokecard_lotteries_v1` | JSON array | 抽選情報リスト |
+| `pokecard_lottery_statuses_v1` | JSON object | 抽選ステータスキャッシュ `{ [lottery_id]: status }` |
 
 ---
 
@@ -70,6 +71,7 @@ pokecard/
 | `partner-qr-modal` | 当選QR表示（管理者用） |
 | `admin-password-modal` | 管理者パスワード入力 |
 | `admin-modal` | 管理＆テストモード（認証後のみ） |
+| `lottery-history-modal` | 応募履歴（落選・支払済の抽選一覧） |
 | `lottery-edit-modal` | 抽選追加・編集 |
 
 ---
@@ -135,10 +137,34 @@ renderApp() + switchTab('home')
 
 ## 8. 抽選ページ
 
-- `storage.js` の `getLotteries()` からデータを取得して描画
-- 締切日 (`deadline`) が今日より前の場合: ラベルに「終了」表示、応募ボタンを無効化
+- `storage.js` の `getLotteriesWithStatus()` からデータを取得して描画
+- 抽選一覧は3セクションのプルダウン展開構成（デフォルト: 当選・応募中は展開、履歴は折りたたみ）
+
+### セクション構成
+
+| セクション | 対象ステータス | デフォルト |
+|-----------|--------------|---------|
+| 🏆 当選した抽選 | `won` | 展開 |
+| 📋 応募中の抽選 | `pending` / `applied` | 展開 |
+| 📜 応募履歴 | `lost` / `paid` | 折りたたみ |
+
+### ステータス値
+
+| 値 | 表示 | 説明 |
+|----|------|------|
+| `pending` | ○ 未完了 | 応募前（デフォルト） |
+| `applied` | ✓ 応募済 | 応募済み |
+| `won` | ★ 当選！ | 当選 |
+| `lost` | ✕ 落選 | 落選 |
+| `paid` | 💰 支払済 | 当選後の支払完了 |
+
+- ステータスは各カードのピルボタンをタップして変更（全ユーザー変更可）
+- 管理モーダル内の抽選リストでもセレクトボックスからステータス変更可
+- 「応募する」ボタンは外部URLを別タブで開くのみ（ステータスは自動変更しない）
+- 締切日 (`deadline`) が今日より前の場合: 締切に「（終了）」表示
 - URLは `<a target="_blank" rel="noopener">` で外部ブラウザで開く
-- 管理モーダルの「抽選管理」セクションで CRUD 操作
+- 管理モーダルの「抽選管理」セクションで CRUD 操作（管理者のみ追加・編集・削除可）
+- 「応募履歴」ボタンタップで `lottery-history-modal` を開く（落選・支払済の抽選のみ表示）
 
 ### 抽選データ構造
 ```json
@@ -146,9 +172,25 @@ renderApp() + switchTab('home')
   "id": "lot_1234567890",
   "title": "ポケカ151 抽選",
   "url": "https://example.com/lottery",
-  "deadline": "2026-09-30"
+  "deadline": "2026-09-30",
+  "status": "pending"
 }
 ```
+
+### lottery_status テーブル構成（Supabase）
+```
+lottery_status (
+  id          UUID PRIMARY KEY,
+  lottery_id  TEXT NOT NULL REFERENCES lotteries(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES auth.users(id),
+  status      TEXT CHECK (status IN ('pending','applied','won','lost','paid')),
+  updated_at  TIMESTAMPTZ,
+  UNIQUE (lottery_id, user_id)
+)
+```
+- RLS: 全認証ユーザーが読み書き可・管理者も操作可
+- `getLotteriesWithStatus()` が抽選マスタとステータスを結合して返す
+- ステータスが存在しない場合は `pending` として扱う
 
 ---
 
@@ -215,3 +257,4 @@ https://[ドメイン]/index.html?stamp=1&token=pk_[base36timestamp]
 | 2.1.0 | Supabase管理者ログイン、リワード・抽選CRUD・利用者データ初期化のクラウド連携 |
 | 2.1.1 | 既存localStorageデータのSupabase移行時に、初期スタンプカード作成で移行がスキップされる問題を修正 |
 | 3.0.0 | Supabase移行完了。Service WorkerでSupabase通信をNetwork Onlyとし、オフライン時はキャッシュ閲覧中であることを表示 |
+| 3.1.0 | 抽選機能強化：`lottery_status` テーブル追加、抽選画面を3セクション構成（当選/応募中/履歴）に変更、ステータス管理UI追加、応募履歴モーダル追加 |

@@ -1924,3 +1924,373 @@ button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
   line-height: 1.45;
   text-align: center;
 }
+
+/* ==========================================================================
+   抽選機能強化 v4.0 — ステータス管理・セクション展開
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   抽選ページヘッダー（タイトル + 応募履歴ボタン）
+   -------------------------------------------------------------------------- */
+
+.lottery-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
+.lottery-history-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-gold);
+  background: #FAF8F3;
+  color: var(--color-primary-dark);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-base);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.lottery-history-link-btn:active {
+  background: var(--color-primary-light);
+  transform: scale(0.94);
+}
+
+/* --------------------------------------------------------------------------
+   抽選セクション（折りたたみ）
+   -------------------------------------------------------------------------- */
+
+.lottery-section {
+  margin-bottom: 8px;
+}
+
+.lottery-section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-light);
+  background: var(--bg-card);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: var(--transition);
+  font-family: var(--font-base);
+  text-align: left;
+}
+
+.lottery-section-header:active {
+  background: #F4F0E8;
+}
+
+.lottery-section-title {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.lottery-section-count {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: #F0EBE0;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.lottery-section-arrow {
+  font-size: 16px;
+  color: var(--text-light);
+  transition: transform 0.25s ease;
+  display: inline-block;
+  line-height: 1;
+  transform: rotate(90deg); /* 閉じた状態: 右向き→下向き */
+}
+
+.lottery-section-header.open .lottery-section-arrow {
+  transform: rotate(270deg); /* 開いた状態: 上向き */
+}
+
+.lottery-section-body {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.25s ease;
+  opacity: 0;
+  padding: 0 0;
+}
+
+.lottery-section-body.open {
+  max-height: 2000px; /* 十分大きな値 */
+  opacity: 1;
+  padding: 8px 0 4px;
+}
+
+.lottery-empty-sub {
+  text-align: center;
+  padding: 16px 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+/* --------------------------------------------------------------------------
+   抽選カード（新構造：縦2段）
+   -------------------------------------------------------------------------- */
+
+/* 新カード構造。既存の横並びlottery-cardを上書き */
+.lottery-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ステータス別カードの左ボーダーカラー */
+.lottery-card--won {
+  border-left: 3px solid #F0A500;
+  background: linear-gradient(135deg, #FFFBF0 0%, #FFFFFF 40%);
+}
+
+.lottery-card--applied {
+  border-left: 3px solid #4CAF50;
+}
+
+.lottery-card--pending {
+  border-left: 3px solid var(--border-gold);
+}
+
+.lottery-card--lost {
+  border-left: 3px solid #CCC;
+  opacity: 0.8;
+}
+
+.lottery-card--paid {
+  border-left: 3px solid #9B59B6;
+  opacity: 0.8;
+}
+
+/* カード上段：タイトル + 応募ボタン */
+.lottery-card-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lottery-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.lottery-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lottery-deadline {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.lottery-deadline.expired {
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+/* 応募するボタン（旧 lottery-link-btn を置き換え） */
+.lottery-apply-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #9B59B6 0%, #7D3C98 100%);
+  color: #FFFFFF;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(125, 60, 152, 0.3);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.lottery-apply-btn:active {
+  filter: brightness(0.85);
+  transform: scale(0.93);
+}
+
+/* --------------------------------------------------------------------------
+   ステータス行（カード下段）
+   -------------------------------------------------------------------------- */
+
+.lottery-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lottery-status-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lottery-status-pills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.lottery-status-pill {
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-base);
+  border: 1.5px solid transparent;
+  background: #F0EBE0;
+  color: var(--text-muted);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.lottery-status-pill:active {
+  transform: scale(0.92);
+}
+
+/* 非アクティブ時のhover（iPhone Safariでは不要だが念のため） */
+.lottery-status-pill:not(.active):active {
+  background: #E8E0D0;
+}
+
+/* アクティブ状態（各ステータスカラー） */
+.lottery-status-pill.active.pill-pending {
+  background: #F0EBE0;
+  border-color: var(--border-gold);
+  color: var(--color-primary-dark);
+}
+
+.lottery-status-pill.active.pill-applied {
+  background: #E8F5E9;
+  border-color: #66BB6A;
+  color: #2E7D32;
+}
+
+.lottery-status-pill.active.pill-won {
+  background: #FFF8E1;
+  border-color: #F0A500;
+  color: #B7790A;
+  box-shadow: 0 1px 6px rgba(240, 165, 0, 0.25);
+}
+
+.lottery-status-pill.active.pill-lost {
+  background: #F5F5F5;
+  border-color: #BDBDBD;
+  color: #757575;
+}
+
+.lottery-status-pill.active.pill-paid {
+  background: #F3E5F5;
+  border-color: #AB47BC;
+  color: #7B1FA2;
+}
+
+/* --------------------------------------------------------------------------
+   管理モーダル内の抽選行ステータス列
+   -------------------------------------------------------------------------- */
+
+.admin-lottery-row {
+  flex-wrap: wrap; /* ステータスselectが入るので折り返しを許可 */
+}
+
+.admin-lottery-row-status {
+  flex-shrink: 0;
+}
+
+.admin-status-select {
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: var(--font-base);
+  border: 1.5px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  color: var(--text-main);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A8A095'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   応募履歴モーダル内のバッジ（ステータス別カラー）
+   -------------------------------------------------------------------------- */
+
+.lottery-history-item .history-item-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lottery-history-item .status-won {
+  background: #FFF8E1;
+  color: #B7790A;
+  border: 1.5px solid #F0A500;
+}
+
+.lottery-history-item .status-lost {
+  background: #F5F5F5;
+  color: #757575;
+  border: 1.5px solid #BDBDBD;
+}
+
+.lottery-history-item .status-paid {
+  background: #F3E5F5;
+  color: #7B1FA2;
+  border: 1.5px solid #AB47BC;
+}
+
+.lottery-history-item .status-applied {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1.5px solid #66BB6A;
+}
+
+.lottery-history-item .status-pending {
+  background: #F0EBE0;
+  color: var(--color-primary-dark);
+  border: 1.5px solid var(--border-gold);
+}

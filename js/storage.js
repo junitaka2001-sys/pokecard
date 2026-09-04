@@ -11,7 +11,8 @@ const STORAGE_KEYS = {
   SETTINGS: 'pokecard_settings_v1',
   USED_TOKENS: 'pokecard_used_tokens_v1',
   STAMP_ANGLES: 'pokecard_stamp_angles_v1',
-  LOTTERIES: 'pokecard_lotteries_v1'
+  LOTTERIES: 'pokecard_lotteries_v1',
+  LOTTERY_STATUSES: 'pokecard_lottery_statuses_v1'
 };
 
 // デフォルトのリワード一覧
@@ -696,6 +697,104 @@ class StorageManager {
     const filtered = list.filter(l => l.id !== id);
     this.setLotteries(filtered);
     return true;
+  }
+
+  // --- 抽選ステータス管理 ---
+  // status: 'pending' | 'applied' | 'won' | 'lost' | 'paid'
+
+  /**
+   * 全抽選のステータスを取得する。
+   * 戻り値: { [lottery_id]: status } のオブジェクト
+   */
+  async getLotteryStatuses() {
+    if (window.supabaseClient && window.currentUserId) {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('lottery_status')
+          .select('lottery_id, status')
+          .eq('user_id', window.currentUserId);
+
+        if (!error && data) {
+          const map = {};
+          data.forEach(row => { map[row.lottery_id] = row.status; });
+          localStorage.setItem(STORAGE_KEYS.LOTTERY_STATUSES, JSON.stringify(map));
+          return map;
+        }
+      } catch (e) {
+        console.warn('Supabase getLotteryStatuses error, falling back to localStorage:', e);
+      }
+    }
+
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.LOTTERY_STATUSES);
+      return data ? JSON.parse(data) : {};
+    } catch { return {}; }
+  }
+
+  /**
+   * 指定抽選のステータスを更新する（なければ INSERT、あれば UPDATE）。
+   * @param {string} lotteryId
+   * @param {string} status  'pending'|'applied'|'won'|'lost'|'paid'
+   * @returns {boolean} 成功したら true
+   */
+  async setLotteryStatus(lotteryId, status) {
+    const VALID = ['pending', 'applied', 'won', 'lost', 'paid'];
+    if (!VALID.includes(status)) return false;
+
+    // localStorage を先に更新（オフライン時のキャッシュ）
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.LOTTERY_STATUSES);
+      const map = data ? JSON.parse(data) : {};
+      map[lotteryId] = status;
+      localStorage.setItem(STORAGE_KEYS.LOTTERY_STATUSES, JSON.stringify(map));
+    } catch (e) {
+      console.warn('localStorage setLotteryStatus error:', e);
+    }
+
+    if (window.supabaseClient && window.currentUserId) {
+      try {
+        // UPSERT: (lottery_id, user_id) の UNIQUE 制約を利用
+        const { error } = await window.supabaseClient
+          .from('lottery_status')
+          .upsert(
+            {
+              lottery_id: lotteryId,
+              user_id: window.currentUserId,
+              status: status,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'lottery_id,user_id' }
+          );
+
+        if (error) {
+          console.warn('Supabase setLotteryStatus error:', error.message);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('Supabase setLotteryStatus catch:', e);
+        return false;
+      }
+    }
+
+    // Supabase 未接続時はローカルのみで成功扱い
+    return true;
+  }
+
+  /**
+   * 抽選マスタとステータスをまとめて取得する。
+   * 戻り値: [{ ...lottery, status: string }]
+   */
+  async getLotteriesWithStatus() {
+    const [lotteries, statuses] = await Promise.all([
+      this.getLotteries(),
+      this.getLotteryStatuses()
+    ]);
+
+    return lotteries.map(lot => ({
+      ...lot,
+      status: statuses[lot.id] || 'pending'
+    }));
   }
 }
 

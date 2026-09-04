@@ -145,8 +145,11 @@ async function signInAsAdmin(email, password) {
 
   window.currentUserId = data.user.id;
 
-  // app_metadata.role が admin か確認
-  const role = data.user.app_metadata?.role;
+  // signInWithPassword の戻り値の app_metadata が空になる場合があるため
+  // getSession() で取り直して確認する
+  const { data: sessionData } = await window.supabaseClient.auth.getSession();
+  const role = sessionData?.session?.user?.app_metadata?.role;
+
   if (role !== 'admin') {
     // 管理者権限なし → サインアウトして拒否
     await window.supabaseClient.auth.signOut();

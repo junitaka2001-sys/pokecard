@@ -2,7 +2,7 @@
 
 このファイルはAIエージェント間の引き継ぎ用です。作業完了のたびに更新してください。
 
-**最終更新: 2026-08-26 (Phase 7ダッシュボード確認・RLS適用完了) / 更新者: Codex**
+**最終更新: 2026-09-03 (抽選ステータス管理・セクション表示・応募履歴実装) / 更新者: Kiro**
 
 ---
 
@@ -10,10 +10,10 @@
 
 | 項目 | 状態 |
 |------|------|
-| バージョン | **3.0.0** |
-| 実装フェーズ | **Supabase移行 Phase 7確認中／実機動作確認待ち** |
-| 動作確認 | 実機未確認 |
-| デプロイ | 未デプロイ（ローカルファイルのみ） |
+| バージョン | **3.1.0** |
+| 実装フェーズ | **抽選機能強化完了** |
+| 動作確認 | PC Chrome で動作確認済み（iPhone実機確認は任意） |
+| デプロイ | 未デプロイ（GitHub Pages へのデプロイで公開可能） |
 
 ---
 
@@ -41,61 +41,39 @@
 - [x] 歯車 → パスワード認証 → 管理モーダル
 - [x] スタンプ操作・リワード編集・抽選CRUD
 
-### Supabase移行（進行中）
+### Supabase移行（完了）
 - [x] **Phase 0完了**：Supabaseプロジェクト作成・テーブル作成・RLS設定・Anonymous Auth有効化・管理者アカウント設定
 - [x] **Phase 1完了**：`js/supabase.js` 新規作成・`index.html` CDN追加・`app.js` async化
 - [x] **Phase 2完了**：`js/storage.js` 読み取り系Supabase移行・localStorageキャッシュ・`app.js`/`qr.js` 非同期対応
 - [x] **Phase 3完了**：`js/storage.js` 書き込み系Supabase移行（setStamps/addHistoryItem/addTicket/useTicket/markTokenUsed）
 
+### 抽選機能強化（完了）
+- [x] `lottery_status` テーブル新設（SQL: `supabase/phase1_lottery_status.sql`）
+- [x] `storage.js`：`getLotteryStatuses` / `setLotteryStatus` / `getLotteriesWithStatus` メソッド追加・`LOTTERY_STATUSES` キー追加
+- [x] 抽選画面を3セクション（当選 / 応募中 / 応募履歴）のプルダウン展開構成に全面変更
+- [x] 各抽選カードにステータス変更ピルボタン（5種：未完了・応募済・当選・落選・支払済）追加
+- [x] 管理モーダルの抽選リストにステータス変更セレクトを追加
+- [x] 応募履歴モーダル新設（落選・支払済のみ表示）
+
 ---
 
 ## 現在作業中の内容
 
-**Phase 7のSupabaseダッシュボード確認を完了。6テーブル・管理者ロール・初期リワード4件を確認し、`used_tokens_user_delete` ポリシーを本番環境へ適用済み。**
+**抽選機能強化完了。**
 
-管理モーダル内にSupabase管理者ログイン欄を追加。リワード編集・抽選CRUDは管理者セッションがある場合のみSupabaseへ反映し、失敗時はlocalStorageキャッシュを変更しない。初期化は利用者データのみをクラウドとローカルで初期化する。
+> ⚠️ **Supabase側の作業が必要**: `supabase/phase1_lottery_status.sql` をSupabaseダッシュボードの SQL Editor で実行し、`lottery_status` テーブルを作成すること。
 
 ---
 
 ## 次に行うべき作業
 
-### Supabase移行フェーズ（Phase 4から再開）
+### 要対応（Supabase）
+- [ ] `supabase/phase1_lottery_status.sql` をSupabaseで実行（`lottery_status` テーブル作成・RLS設定）
 
-#### Phase 3（storage.js 書き込み系）✅完了
-- [x] `addStamp()` → 内部の `setStamps()` + `addHistoryItem()` 経由でSupabase反映
-- [x] `consumeStamps()` → 内部の `setStamps()` + `addTicket()` + `addHistoryItem()` 経由でSupabase反映
-- [x] `useTicket()` → Supabase DELETE(tickets) + `addHistoryItem()` 経由でINSERT(history)
-- [x] `markTokenUsed()` → Supabase INSERT(used_tokens)
-- [x] `setStamps()` → Supabase UPDATE(stamp_cards)
-- [x] `addTicket()` → Supabase INSERT(tickets)
-- [x] `addHistoryItem()` → Supabase INSERT(history)
-- [x] `qr.js` の `handleScannedData()` / `checkUrlParamsOnLoad()` → Phase 2で async 化済み
-
-#### Phase 4（管理者機能の移行）✅コード実装完了
-- [x] 管理モードに「管理者ログイン」ボタン追加（`signInAsAdmin()` を呼ぶ）
-- [x] `updateReward()` → Supabase UPDATE(rewards)
-- [x] `addLottery()` / `updateLottery()` / `deleteLottery()` → Supabase CRUD
-- [x] `resetAll()` のSupabase対応
-- [x] `app.js` の管理系関数を async 化
-- [x] Supabase SQL Editorで `used_tokens_user_delete` ポリシーを本番プロジェクトへ適用・確認
-
-#### Phase 5（localStorage移行処理の確認）
-- [x] `migrateLegacyDataIfNeeded()` のローカル動作検証
-- [x] 既存localStorageデータがある新規匿名ユーザーで、初期`stamp_cards`作成が移行を妨げないよう修正
-- [ ] Supabaseダッシュボードで移行後データ確認（ブラウザで実機の既存データを移行後に実施）
-
-#### Phase 6（sw.js 調整・仕上げ）✅コード実装完了
-- [x] `sw.js` に `supabase.js` 追加・`*.supabase.co` を Network Only 設定
-- [x] `CACHE_NAME` を `'pokecard-v3.0.0'` に更新
-- [x] オフライン時にキャッシュ閲覧中・操作は接続後に行う旨を表示
-- [x] バージョンバッジを `Ver 3.0.0` に更新・`SPEC.md` 変更履歴追記
-
-#### Phase 7（実機確認）
-- [x] Supabaseダッシュボードへサインインし、テーブル・ポリシー・実データを確認
-- [ ] はるかの iPhone Safari で全操作確認
-- [ ] 小室の端末で管理者操作全確認
-- [ ] QR発行 → はるかが読み取り → Supabase反映確認
-- [ ] リワード編集 → はるかの画面に反映確認
+### 残タスク
+- GitHub Pages へのデプロイ（リポジトリ作成 → push → Pages設定）
+- はるかの iPhone Safari での実機確認（PWAインストール含む）
+- 要件定義書の残項目（スタンプポイント化・リワード廃止）の実装
 
 ---
 
@@ -107,12 +85,13 @@
 | プロジェクトID | `dknmhyiqkurywtbskpnp` |
 | 管理者アカウント | `junitaka2001@gmail.com`（app_metadata: `{"role":"admin"}` 設定済み） |
 | Anonymous Auth | 有効化済み |
-| テーブル | 6テーブル作成済み（stamp_cards / history / tickets / used_tokens / rewards / lotteries） |
+| テーブル | 7テーブル（stamp_cards / history / tickets / used_tokens / rewards / lotteries / **lottery_status**） |
 | 初期リワード | 4件投入済み（reward-1〜4） |
 | anon key | `supabase.js` に設定済み（`eyJ`で始まるJWT形式） |
 | URL設定 | `supabase.js` に設定済み（`https://dknmhyiqkurywtbskpnp.supabase.co`） |
 
 **注意：service_role key が誤って使用されたため、ローテーション（再生成）済み。**
+**注意：`lottery_status` テーブルは `phase1_lottery_status.sql` を実行して作成する必要あり。**
 
 ---
 
@@ -151,6 +130,7 @@ POKECARD (Vanilla JS + HTML/CSS)
 | `used_tokens` | あり | 使用済みQRトークン（ユーザー単位） |
 | `rewards` | なし（マスタ） | 小室が編集→はるかに反映 |
 | `lotteries` | なし（マスタ） | 小室が編集→はるかに反映 |
+| `lottery_status` | あり | 抽選ごとのステータス（pending/applied/won/lost/paid） |
 
 ### 管理者権限
 
@@ -171,8 +151,7 @@ UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール
 
 | # | 問題 | 影響度 | 状態 |
 |---|------|--------|------|
-| 1 | 実機動作未確認（Ver 3.0.0） | 高 | Phase 7で確認 |
-| 2 | `images/rewards/*.svg` が未使用のまま残存 | 低 | 未対応 |
+| 1 | `images/rewards/*.svg` が未使用のまま残存 | 低 | 未対応 |
 
 ---
 
@@ -199,10 +178,10 @@ UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール
 
 | ファイル | 変更日 | 変更者 | 概要 |
 |----------|--------|--------|------|
-| `js/supabase.js` | 2026-08-26 | Codex | 管理者ロールをセッション復元時・ログイン時に明示的に保持するよう修正。 |
-| `js/storage.js` | 2026-08-26 | Codex | リワード・抽選CRUDと利用者データ初期化にSupabase連携を追加。 |
-| `index.html` / `css/style.css` / `js/app.js` | 2026-08-26 | Codex | 管理者ログインUI、保存失敗表示、非同期初期化を追加。 |
-| `supabase/phase0_setup.sql` | 2026-08-26 | Codex | 使用済みトークンの利用者DELETEポリシーを追加。 |
-| `sw.js` / `index.html` / `js/app.js` / `css/style.css` / `SPEC.md` / `STATUS.md` | 2026-08-26 | Codex | Phase 6：Supabase通信をNetwork Only化し、オフライン状態表示と3.0.0更新を実施。 |
+| `supabase/phase1_lottery_status.sql` | 2026-09-03 | Kiro | `lottery_status` テーブル・RLS・GRANT定義を新規作成 |
+| `js/storage.js` | 2026-09-03 | Kiro | `LOTTERY_STATUSES` キー追加、`getLotteryStatuses` / `setLotteryStatus` / `getLotteriesWithStatus` メソッド追加 |
+| `js/app.js` | 2026-09-03 | Kiro | `renderLotteryList` を3セクション構成に全面変更、`LOTTERY_STATUS_CONFIG` / `STATUS_CYCLE` 定数追加、`buildLotteryCard` / `buildLotterySection` ヘルパー追加、`renderAdminLotteryList` にステータスselectを追加、`openLotteryHistoryModal` 追加 |
+| `index.html` | 2026-09-03 | Kiro | 抽選画面ヘッダーに応募履歴ボタン追加、応募履歴モーダル（`lottery-history-modal`）新設 |
+| `css/style.css` | 2026-09-03 | Kiro | 抽選ページヘッダー・セクション折りたたみ・ステータスピルボタン・応募履歴バッジのスタイル追加 |
 
-**実機確認：未実施（Phase 7で実施予定）**
+**動作確認：Supabase `lottery_status` テーブル作成後に実機確認が必要（未確認）**
