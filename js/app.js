@@ -55,6 +55,12 @@ async function initApp() {
     window.qrManager.checkUrlParamsOnLoad();
   }
 
+  // デバッグ表示（確認後に削除）
+  const debugEl = document.getElementById('debug-uid');
+  if (debugEl) {
+    debugEl.textContent = 'UID: ' + (window.currentUserId || 'null（未認証）');
+  }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').then((reg) => {
