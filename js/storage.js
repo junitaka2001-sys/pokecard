@@ -52,6 +52,15 @@ class StorageManager {
     this.init();
   }
 
+  /**
+   * 操作対象のユーザーIDを返す。
+   * 管理者の場合は window.targetUserId（非管理者UID）、
+   * それ以外は window.currentUserId（自分自身）を返す。
+   */
+  get operationUserId() {
+    return window.targetUserId ?? window.currentUserId;
+  }
+
   init() {
     if (localStorage.getItem(STORAGE_KEYS.STAMPS) === null) {
       this.setStamps(3);
@@ -94,7 +103,7 @@ class StorageManager {
         const { data, error } = await window.supabaseClient
           .from('stamp_cards')
           .select('stamp_angles')
-          .eq('user_id', window.currentUserId)
+          .eq('user_id', this.operationUserId)
           .maybeSingle();
 
         if (!error && data && data.stamp_angles) {
@@ -121,7 +130,7 @@ class StorageManager {
         const { data, error } = await window.supabaseClient
           .from('stamp_cards')
           .select('stamps')
-          .eq('user_id', window.currentUserId)
+          .eq('user_id', this.operationUserId)
           .maybeSingle();
 
         if (!error && data && typeof data.stamps === 'number') {
@@ -147,7 +156,7 @@ class StorageManager {
       window.supabaseClient
         .from('stamp_cards')
         .update({ stamps: safeCount })
-        .eq('user_id', window.currentUserId)
+        .eq('user_id', this.operationUserId)
         .then(({ error }) => {
           if (error) console.warn('Supabase setStamps error:', error.message);
         })
@@ -223,7 +232,7 @@ class StorageManager {
         const { data, error } = await window.supabaseClient
           .from('tickets')
           .select('*')
-          .eq('user_id', window.currentUserId)
+          .eq('user_id', this.operationUserId)
           .order('exchanged_at', { ascending: false });
 
         if (!error && data) {
@@ -270,7 +279,7 @@ class StorageManager {
         .from('tickets')
         .insert({
           id: ticket.id,
-          user_id: window.currentUserId,
+          user_id: this.operationUserId,
           reward_id: ticket.rewardId,
           title: ticket.title,
           description: ticket.description || null,
@@ -306,7 +315,7 @@ class StorageManager {
         .from('tickets')
         .delete()
         .eq('id', ticketId)
-        .eq('user_id', window.currentUserId)
+        .eq('user_id', this.operationUserId)
         .then(({ error }) => {
           if (error) console.warn('Supabase useTicket delete error:', error.message);
         })
@@ -400,7 +409,7 @@ class StorageManager {
         const { data, error } = await window.supabaseClient
           .from('history')
           .select('*')
-          .eq('user_id', window.currentUserId)
+          .eq('user_id', this.operationUserId)
           .order('created_at', { ascending: false });
 
         if (!error && data) {
@@ -444,7 +453,7 @@ class StorageManager {
         .from('history')
         .insert({
           id: item.id,
-          user_id: window.currentUserId,
+          user_id: this.operationUserId,
           type: item.type,
           title: item.title,
           amount: item.amount || 0,
@@ -472,7 +481,7 @@ class StorageManager {
         const { data, error } = await window.supabaseClient
           .from('used_tokens')
           .select('token')
-          .eq('user_id', window.currentUserId)
+          .eq('user_id', this.operationUserId)
           .eq('token', token)
           .maybeSingle();
 
@@ -509,7 +518,7 @@ class StorageManager {
       window.supabaseClient
         .from('used_tokens')
         .insert({
-          user_id: window.currentUserId,
+          user_id: this.operationUserId,
           token: token,
         })
         .then(({ error }) => {
@@ -528,7 +537,7 @@ class StorageManager {
       const resetDate = new Date().toISOString();
       const resetHistory = {
         id: 'hist-reset-' + Date.now(),
-        user_id: window.currentUserId,
+        user_id: this.operationUserId,
         type: 'stamp_add',
         title: 'カード発行記念スタンプ',
         amount: 3,
@@ -537,21 +546,21 @@ class StorageManager {
 
       try {
         const { error: ticketsError } = await window.supabaseClient
-          .from('tickets').delete().eq('user_id', window.currentUserId);
+          .from('tickets').delete().eq('user_id', this.operationUserId);
         if (ticketsError) throw ticketsError;
 
         const { error: historyError } = await window.supabaseClient
-          .from('history').delete().eq('user_id', window.currentUserId);
+          .from('history').delete().eq('user_id', this.operationUserId);
         if (historyError) throw historyError;
 
         const { error: tokensError } = await window.supabaseClient
-          .from('used_tokens').delete().eq('user_id', window.currentUserId);
+          .from('used_tokens').delete().eq('user_id', this.operationUserId);
         if (tokensError) throw tokensError;
 
         const { error: stampError } = await window.supabaseClient
           .from('stamp_cards')
           .update({ stamps: 3 })
-          .eq('user_id', window.currentUserId);
+          .eq('user_id', this.operationUserId);
         if (stampError) throw stampError;
 
         const { error: resetHistoryError } = await window.supabaseClient
@@ -712,7 +721,7 @@ class StorageManager {
         const { data, error } = await window.supabaseClient
           .from('lottery_status')
           .select('lottery_id, status')
-          .eq('user_id', window.currentUserId);
+          .eq('user_id', this.operationUserId);
 
         if (!error && data) {
           const map = {};
@@ -759,7 +768,7 @@ class StorageManager {
           .upsert(
             {
               lottery_id: lotteryId,
-              user_id: window.currentUserId,
+              user_id: this.operationUserId,
               status: status,
               updated_at: new Date().toISOString()
             },

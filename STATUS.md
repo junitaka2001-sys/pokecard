@@ -2,7 +2,7 @@
 
 このファイルはAIエージェント間の引き継ぎ用です。作業完了のたびに更新してください。
 
-**最終更新: 2026-09-03 (抽選ステータス管理・セクション表示・応募履歴実装) / 更新者: Kiro**
+**最終更新: 2026-09-03 (管理者操作対象UID修正・targetUserId導入) / 更新者: Kiro**
 
 ---
 
@@ -55,20 +55,27 @@
 - [x] 管理モーダルの抽選リストにステータス変更セレクトを追加
 - [x] 応募履歴モーダル新設（落選・支払済のみ表示）
 
+### 管理者/利用者同期修正（完了）
+- [x] `supabase/phase2_target_user.sql`：`get_target_user_id()` RPC関数新設（管理者以外の最古ユーザーUIDを返す）
+- [x] `supabase.js`：`resolveTargetUserId()` 追加・`initSupabase()` / `signInAsAdmin()` 後に呼ぶよう変更
+- [x] `supabase.js`：`window.targetUserId` グローバル追加
+- [x] `storage.js`：`operationUserId` getter追加・全操作メソッドの対象UIDを `targetUserId` 優先に変更
+
 ---
 
 ## 現在作業中の内容
 
-**抽選機能強化完了。**
+**管理者/利用者同期修正完了。**
 
-> ⚠️ **Supabase側の作業が必要**: `supabase/phase1_lottery_status.sql` をSupabaseダッシュボードの SQL Editor で実行し、`lottery_status` テーブルを作成すること。
+> ⚠️ **Supabase側の作業が必要**: `supabase/phase2_target_user.sql` をSupabaseダッシュボードの SQL Editor で実行し、`get_target_user_id()` 関数を作成すること。
 
 ---
 
 ## 次に行うべき作業
 
 ### 要対応（Supabase）
-- [ ] `supabase/phase1_lottery_status.sql` をSupabaseで実行（`lottery_status` テーブル作成・RLS設定）
+- [ ] `supabase/phase2_target_user.sql` をSupabaseで実行（`get_target_user_id()` 関数作成）
+- [ ] 不要になった旧管理者アカウント（`20dd0a2a-6838-4ff6-97ea-fc3ab3a3217c`）と不要な匿名ユーザーレコードをAuthentication → Usersから削除する（任意）
 
 ### 残タスク
 - GitHub Pages へのデプロイ（リポジトリ作成 → push → Pages設定）
@@ -178,7 +185,11 @@ UID消滅時: 新規匿名UID → 「以前のデータを復元」→ メール
 
 | ファイル | 変更日 | 変更者 | 概要 |
 |----------|--------|--------|------|
-| `supabase/phase1_lottery_status.sql` | 2026-09-03 | Kiro | `lottery_status` テーブル・RLS・GRANT定義を新規作成 |
+| `supabase/phase2_target_user.sql` | 2026-09-03 | Kiro | `get_target_user_id()` RPC関数新設（管理者操作の対象UID取得） |
+| `js/supabase.js` | 2026-09-03 | Kiro | `window.targetUserId` 追加、`resolveTargetUserId()` 追加、`initSupabase()`/`signInAsAdmin()` 後に呼ぶよう変更 |
+| `js/storage.js` | 2026-09-03 | Kiro | `operationUserId` getter追加、全操作メソッドの対象UIDを `targetUserId` 優先に変更 |
+| `index.html` | 2026-09-03 | Kiro | デバッグUID表示を削除 |
+| `js/app.js` | 2026-09-03 | Kiro | デバッグUID表示コードを削除 |
 | `js/storage.js` | 2026-09-03 | Kiro | `LOTTERY_STATUSES` キー追加、`getLotteryStatuses` / `setLotteryStatus` / `getLotteriesWithStatus` メソッド追加 |
 | `js/app.js` | 2026-09-03 | Kiro | `renderLotteryList` を3セクション構成に全面変更、`LOTTERY_STATUS_CONFIG` / `STATUS_CYCLE` 定数追加、`buildLotteryCard` / `buildLotterySection` ヘルパー追加、`renderAdminLotteryList` にステータスselectを追加、`openLotteryHistoryModal` 追加 |
 | `index.html` | 2026-09-03 | Kiro | 抽選画面ヘッダーに応募履歴ボタン追加、応募履歴モーダル（`lottery-history-modal`）新設 |

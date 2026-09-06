@@ -15,7 +15,8 @@ const MIGRATION_FLAG_KEY = 'pokecard_migrated_to_supabase';
 
 // グローバル公開：storage.js・app.js から参照する
 window.supabaseClient = null;
-window.currentUserId = null;
+window.currentUserId = null;       // 自分自身のUID（認証済みユーザー）
+window.targetUserId = null;        // 操作対象UID（管理者の場合は非管理者ユーザー、それ以外は自分自身）
 window.currentUserIsAdmin = false;
 
 /**
@@ -58,6 +59,9 @@ async function initSupabase() {
       await migrateLegacyDataIfNeeded();
     }
 
+    // 操作対象UIDを解決（管理者→非管理者UID、それ以外→自分）
+    await resolveTargetUserId();
+
   } catch (err) {
     console.error('initSupabase error:', err);
     // 初期化失敗時はlocalStorageモードで続行
@@ -65,8 +69,37 @@ async function initSupabase() {
 }
 
 /**
- * Anonymous Auth でサインイン
+ * 操作対象UIDを解決して window.targetUserId にセットする。
+ * - 管理者の場合: get_target_user_id() RPC で非管理者ユーザーのUIDを取得
+ * - 非管理者の場合: 自分自身のUID（currentUserId）をそのまま使う
  */
+async function resolveTargetUserId() {
+  if (!window.currentUserId) {
+    window.targetUserId = null;
+    return;
+  }
+
+  if (window.currentUserIsAdmin) {
+    try {
+      const { data, error } = await window.supabaseClient.rpc('get_target_user_id');
+      if (!error && data) {
+        window.targetUserId = data;
+        console.log('Target user (non-admin):', window.targetUserId);
+      } else {
+        console.warn('get_target_user_id failed:', error?.message);
+        window.targetUserId = null;
+      }
+    } catch (e) {
+      console.warn('resolveTargetUserId error:', e);
+      window.targetUserId = null;
+    }
+  } else {
+    // 非管理者（はるか）は自分自身が対象
+    window.targetUserId = window.currentUserId;
+  }
+}
+
+window.resolveTargetUserId = resolveTargetUserId;
 async function signInAnonymously(createInitialStampCard = true) {
   const { data, error } = await window.supabaseClient.auth.signInAnonymously();
 
@@ -159,6 +192,8 @@ async function signInAsAdmin(email, password) {
   }
 
   window.currentUserIsAdmin = true;
+  // 管理者ログイン後、操作対象UID（非管理者ユーザー）を取得
+  await resolveTargetUserId();
   return { success: true, message: '管理者としてログインしました' };
 }
 
