@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <radialGradient id="aquaBg" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#48CAE4"/>
+      <stop offset="50%" stop-color="#0077B6"/>
+      <stop offset="100%" stop-color="#023E8A"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#aquaBg)"/>
+  
+  <!-- 光の差し込み -->
+  <polygon points="30,0 45,0 70,100 40,100" fill="#FFFFFF" opacity="0.12"/>
+  <polygon points="55,0 68,0 95,100 75,100" fill="#FFFFFF" opacity="0.08"/>
+
+  <!-- マンタ・エイ -->
+  <path d="M 50,32 Q 35,42 22,40 Q 38,48 50,46 Q 62,48 78,40 Q 65,42 50,32 Z" fill="#1C3D5A" opacity="0.85"/>
+  <line x1="50" y1="46" x2="50" y2="60" stroke="#1C3D5A" stroke-width="1.2" opacity="0.85"/>
+
+  <!-- 熱帯魚（クマノミ風） -->
+  <ellipse cx="68" cy="65" rx="10" ry="6" fill="#F77F00" />
+  <polygon points="76,65 84,60 84,70" fill="#F77F00"/>
+  <path d="M 66,59 L 66,71 M 72,60 L 72,70" stroke="#FFFFFF" stroke-width="2"/>
+  <circle cx="62" cy="63" r="1.2" fill="#000"/>
+
+  <!-- イルカ・クラゲシルエット -->
+  <path d="M 32,68 C 28,64 36,60 40,64 C 42,66 40,70 32,68 Z" fill="#90E0EF" opacity="0.6"/>
+  <path d="M 33,70 Q 32,76 34,80 M 36,70 Q 37,76 36,80 M 39,70 Q 41,76 39,80" stroke="#90E0EF" stroke-width="0.8" opacity="0.6" fill="none"/>
+
+  <!-- 気泡（あぶく） -->
+  <circle cx="54" cy="55" r="2" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="58" cy="46" r="1.5" fill="#FFFFFF" opacity="0.5"/>
+  <circle cx="48" cy="38" r="2.5" fill="#FFFFFF" opacity="0.7"/>
+</svg>

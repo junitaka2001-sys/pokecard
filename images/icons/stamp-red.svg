@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <!-- スタンプ風のインク滲みフィルター -->
+    <filter id="stamp-roughness" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+    <!-- スタンプグラデーション -->
+    <linearGradient id="stamp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E63946" />
+      <stop offset="100%" stop-color="#C9182B" />
+    </linearGradient>
+  </defs>
+
+  <!-- スタンプ全体グループ（ラフ効果適用） -->
+  <g filter="url(#stamp-roughness)">
+    <!-- 外側リング（2重枠） -->
+    <circle cx="50" cy="50" r="45" fill="none" stroke="url(#stamp-grad)" stroke-width="4.5" stroke-dasharray="98 2 95 3" />
+    <circle cx="50" cy="50" r="39" fill="none" stroke="url(#stamp-grad)" stroke-width="1.8" />
+    
+    <!-- モンスターボールの上半分（赤塗り） -->
+    <path d="M 18,50 A 32,32 0 0,1 82,50 Z" fill="url(#stamp-grad)" opacity="0.92" />
+    
+    <!-- モンスターボールの下半分（白抜き/薄赤枠） -->
+    <path d="M 18,50 A 32,32 0 0,0 82,50 Z" fill="#FFFFFF" fill-opacity="0.25" stroke="url(#stamp-grad)" stroke-width="2.5" />
+    
+    <!-- 中央の仕切り線帯 -->
+    <path d="M 18,50 L 82,50" stroke="#FFFFFF" stroke-width="4.5" />
+    <path d="M 18,50 L 82,50" stroke="url(#stamp-grad)" stroke-width="2" />
+
+    <!-- 中央のボタン（外側円・白円・内側赤円） -->
+    <circle cx="50" cy="50" r="11" fill="#FFFFFF" stroke="url(#stamp-grad)" stroke-width="3" />
+    <circle cx="50" cy="50" r="5.5" fill="url(#stamp-grad)" />
+    <circle cx="48.5" cy="48.5" r="1.5" fill="#FFFFFF" opacity="0.8" />
+  </g>
+</svg>

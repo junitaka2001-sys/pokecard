@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <radialGradient id="yakinikuBg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4A2E2B"/>
+      <stop offset="100%" stop-color="#241412"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#yakinikuBg)"/>
+  
+  <!-- 網（グリル） -->
+  <circle cx="50" cy="50" r="40" fill="#1C1B1B" stroke="#666" stroke-width="2"/>
+  <path d="M 18,35 L 82,35 M 12,50 L 88,50 M 18,65 L 82,65 M 35,18 L 35,82 M 50,12 L 50,88 M 65,18 L 65,82" stroke="#555" stroke-width="1.2"/>
+  
+  <!-- 炭火の赤み -->
+  <circle cx="50" cy="50" r="22" fill="#E63946" opacity="0.25" filter="blur(3px)"/>
+  
+  <!-- 焼肉（カルビ・ロース） -->
+  <ellipse cx="40" cy="42" rx="14" ry="9" fill="#B93135" transform="rotate(-15 40 42)"/>
+  <path d="M 32,40 Q 40,36 48,42" stroke="#FDE8E8" stroke-width="2" fill="none" opacity="0.8"/>
+  <path d="M 34,44 Q 40,40 45,46" stroke="#FDE8E8" stroke-width="1.5" fill="none" opacity="0.8"/>
+  
+  <ellipse cx="60" cy="56" rx="15" ry="10" fill="#96282B" transform="rotate(10 60 56)"/>
+  <path d="M 52,54 Q 60,50 68,56" stroke="#FDE8E8" stroke-width="2.2" fill="none" opacity="0.8"/>
+  
+  <!-- 炎・煙のアクセント -->
+  <path d="M 46,28 Q 50,22 47,18 Q 52,22 56,26" fill="none" stroke="#FFAA00" stroke-width="1.8" stroke-linecap="round"/>
+</svg>

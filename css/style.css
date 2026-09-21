@@ -1,0 +1,2398 @@
+/* ==========================================================================
+   POKECARD - はるか専用デジタルポイントカード
+   Design System & Styling
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Montserrat:wght@500;700;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+
+:root {
+  /* Colors */
+  --bg-main: #F7F5EE;
+  --bg-card: #FFFFFF;
+  --bg-card-sub: #FAF8F2;
+  
+  --color-primary: #C5A059;
+  --color-primary-dark: #9E7D3B;
+  --color-primary-light: #F4ECE1;
+  --color-primary-gold: linear-gradient(135deg, #D4AF37 0%, #C5A059 50%, #A68035 100%);
+  
+  --color-stamp-red: #E63946;
+  --color-stamp-red-dark: #C9182B;
+  
+  --text-main: #2C2825;
+  --text-muted: #8C847B;
+  --text-light: #B5ACA2;
+  
+  --border-light: #EBE5DA;
+  --border-gold: #DFCDB2;
+  
+  --shadow-sm: 0 2px 8px rgba(90, 75, 60, 0.05);
+  --shadow-md: 0 6px 20px rgba(90, 75, 60, 0.08);
+  --shadow-lg: 0 12px 32px rgba(90, 75, 60, 0.12);
+  --shadow-stamp: 0 4px 12px rgba(230, 57, 70, 0.25);
+
+  /* Fonts */
+  --font-base: 'Zen Maru Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-en: 'Montserrat', sans-serif;
+  --font-script: 'Caveat', cursive;
+
+  /* Sizing & Transitions */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+  --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100dvh;
+  background-color: #E7E3D8;
+  font-family: var(--font-base);
+  color: var(--text-main);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  user-select: none;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* App Container (スマホ画面枠・レスポンシブコンテナ) */
+#app-container {
+  width: 100%;
+  max-width: 440px;
+  height: 100dvh;
+  margin: 0 auto;
+  background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(circle at 95% 8%, rgba(197, 160, 89, 0.07) 0%, transparent 60%),
+    radial-gradient(circle at 5% 90%, rgba(197, 160, 89, 0.05) 0%, transparent 50%);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+/* 背景モンスターボール透かし */
+.bg-watermark-top-right {
+  position: absolute;
+  top: -20px;
+  right: -30px;
+  width: 180px;
+  height: 180px;
+  background: url('../images/icons/watermark-ball.svg') no-repeat center/contain;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.8;
+}
+
+.bg-watermark-bottom-left {
+  position: absolute;
+  bottom: 80px;
+  left: -40px;
+  width: 160px;
+  height: 160px;
+  background: url('../images/icons/watermark-ball.svg') no-repeat center/contain;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+.app-header {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 16px 20px 8px;
+  flex-shrink: 0;
+}
+
+.header-logo-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 4px;
+  display: block;
+}
+
+.app-title {
+  font-family: var(--font-en);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--text-main);
+  line-height: 1.1;
+  text-indent: 0.16em;
+}
+
+.app-subtitle {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  margin-top: 3px;
+}
+
+/* ==========================================================================
+   Main Content Views
+   ========================================================================== */
+.view-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 18px calc(76px + env(safe-area-inset-bottom, 0px));
+  position: relative;
+  z-index: 5;
+  overscroll-behavior-y: contain;
+}
+
+.view-container::-webkit-scrollbar {
+  display: none;
+}
+
+.view-page {
+  display: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.view-page.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   1. Home View Components
+   ========================================================================== */
+
+/* スタンプカード */
+.stamp-card-wrapper {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-md);
+  padding: 22px 16px 14px;
+  margin-bottom: 14px;
+  position: relative;
+  text-align: center;
+}
+
+.stamp-card-ribbon {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #A88653;
+  background: linear-gradient(135deg, #B5935F 0%, #9C7844 100%);
+  color: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 3px 20px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 6px rgba(130, 95, 45, 0.3);
+}
+
+/* 10マスグリッド (2行×5列) */
+.stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px 6px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.stamp-slot {
+  aspect-ratio: 1 / 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stamp-slot-circle {
+  width: 100%;
+  height: 100%;
+  max-width: 58px;
+  max-height: 58px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 未獲得マス */
+.stamp-slot:not(.stamped) .stamp-slot-circle {
+  background: #F8F6F0;
+  border: 2px solid #E6E1D5;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.stamp-slot:not(.stamped) .stamp-slot-circle::after {
+  content: '';
+  width: 65%;
+  height: 65%;
+  border-radius: 50%;
+  border: 1px dashed #DDD7CA;
+}
+
+/* 獲得済みスタンプ */
+.stamp-slot.stamped .stamp-slot-circle {
+  background: transparent;
+  transform: rotate(var(--stamp-angle, 0deg));
+}
+
+.stamp-img {
+  width: 96%;
+  height: 96%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 5px rgba(230, 57, 70, 0.3));
+}
+
+/* スタンプ打刻直後のバウンスアニメーション */
+.stamp-slot.just-stamped .stamp-slot-circle {
+  animation: stampSlam 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes stampSlam {
+  0% {
+    transform: scale(2.8) rotate(-15deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(0.9) rotate(var(--stamp-angle, 0deg));
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(var(--stamp-angle, 0deg));
+    opacity: 1;
+  }
+}
+
+/* スタンプ数テキスト */
+.stamp-count-display {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.stamp-count-current {
+  color: var(--color-stamp-red);
+  font-size: 19px;
+  font-family: var(--font-en);
+  font-weight: 800;
+}
+
+.stamp-count-divider {
+  font-family: var(--font-en);
+  margin: 0 2px;
+}
+
+.stamp-count-total {
+  font-family: var(--font-en);
+  font-size: 16px;
+}
+
+/* 次のリワード カード */
+.next-reward-card {
+  background: #FCFAF5;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.next-reward-card:active {
+  transform: scale(0.985);
+}
+
+.next-reward-avatar {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid #ECD9B7;
+  background: #FFF;
+}
+
+.next-reward-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.next-reward-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.next-reward-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #A67E44;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.next-reward-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 1px 0;
+}
+
+.next-reward-remain {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.next-reward-remain strong {
+  color: var(--color-stamp-red);
+  font-size: 14px;
+  font-family: var(--font-en);
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   保有中の特典チケットエリア (Ticket Wallet)
+   ========================================================================== */
+.active-tickets-section {
+  margin-bottom: 14px;
+}
+
+.tickets-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #A67E44;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.active-tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticket-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed #DFCDB2;
+  box-shadow: 0 4px 14px rgba(186, 146, 68, 0.12);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAF8F2 100%);
+  animation: ticketPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, max-height 0.55s ease, margin 0.55s ease, padding 0.55s ease;
+}
+
+.ticket-card.using-out {
+  transform: scale(0.8) translateY(-12px);
+  opacity: 0;
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  pointer-events: none;
+}
+
+@keyframes ticketPop {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.ticket-card::before, .ticket-card::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-main);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.ticket-card::before { left: -6px; border-right: 1.5px solid #DFCDB2; }
+.ticket-card::after { right: -6px; border-left: 1.5px solid #DFCDB2; }
+
+.ticket-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid #E5C77A;
+  background: #FFF;
+  flex-shrink: 0;
+}
+
+.ticket-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ticket-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ticket-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.ticket-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.ticket-use-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  background: linear-gradient(135deg, #E63946 0%, #C9182B 100%);
+  color: #FFFFFF;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(230, 57, 70, 0.35);
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket-use-btn:active {
+  transform: scale(0.90) translateY(1px) !important;
+  box-shadow: 0 1px 3px rgba(230, 57, 70, 0.4) !important;
+  filter: brightness(0.88);
+}
+
+/* 全ボタン共通のタップ・押下フィードバック (CSS :active & JS .is-touched) */
+button, [role="button"], .next-reward-card {
+  touch-action: manipulation;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0.2, 1), filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+button:active, [role="button"]:active,
+button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
+  transform: scale(0.92) !important;
+  filter: brightness(0.88) !important;
+}
+
+.ticket-use-btn:active, .ticket-use-btn.is-touched {
+  transform: scale(0.88) translateY(1px) !important;
+  box-shadow: 0 1px 3px rgba(230, 57, 70, 0.4) !important;
+  filter: brightness(0.85) !important;
+}
+
+.reward-exchange-btn.can-exchange:active, .reward-exchange-btn.can-exchange.is-touched {
+  transform: scale(0.88) translateY(1px) !important;
+  filter: brightness(0.85) !important;
+}
+
+.admin-btn:active, .admin-btn.is-touched {
+  transform: scale(0.90) !important;
+  background-color: #EAE3D5 !important;
+}
+
+.btn-primary:active, .btn-primary.is-touched {
+  transform: scale(0.92) translateY(1px) !important;
+  filter: brightness(0.88) !important;
+}
+
+.btn-secondary:active, .btn-secondary.is-touched {
+  transform: scale(0.92) !important;
+  background-color: #E2DDD5 !important;
+}
+
+/* 履歴バッジ用スタイル（使用済みチケット） */
+.history-item-badge.used {
+  background: #EAF8EE;
+  color: #27AE60;
+}
+
+/* QR案内バナー */
+.qr-banner-btn {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+}
+
+.qr-banner-btn:active {
+  background: #F5EFE3;
+  transform: scale(0.985);
+}
+
+.qr-icon-box {
+  width: 38px;
+  height: 38px;
+  background: #F7F4EB;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-main);
+}
+
+.qr-icon-box svg {
+  width: 24px;
+  height: 24px;
+}
+
+.qr-banner-text {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-main);
+}
+
+.qr-arrow {
+  color: var(--text-light);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* 履歴リンクボタン */
+.history-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.history-link-btn:hover, .history-link-btn:active {
+  color: var(--color-primary-dark);
+}
+
+.history-link-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* バージョン識別表示 */
+.version-badge-container {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.version-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-family: var(--font-en);
+  font-weight: 700;
+  color: #A39686;
+  background: rgba(197, 160, 89, 0.12);
+  border: 1px solid rgba(197, 160, 89, 0.25);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.05em;
+}
+
+/* ==========================================================================
+   2. Reward View Components
+   ========================================================================== */
+.reward-header-box {
+  text-align: center;
+  padding: 4px 0 16px;
+}
+
+.reward-main-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.reward-sub-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.reward-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reward-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: var(--transition);
+}
+
+.reward-card:hover {
+  border-color: var(--border-gold);
+}
+
+.reward-card-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid #EDE7DA;
+  background: #FDFBF7;
+}
+
+.reward-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reward-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.reward-item-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 3px;
+}
+
+/* リワードカード内のスタンプ進捗ドット */
+.reward-stamp-progress {
+  display: flex;
+  align-items: center;
+  gap: 3.5px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.reward-stamp-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.reward-stamp-dot.active {
+  background: url('../images/icons/stamp-red.svg') no-repeat center/contain;
+}
+
+.reward-stamp-dot.inactive {
+  background: #F1ECE3;
+  border: 1px solid #DFD9CE;
+}
+
+.reward-req-text {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* 交換ボタン */
+.reward-exchange-btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.reward-exchange-btn.can-exchange {
+  background: #C5A059;
+  background: linear-gradient(135deg, #D4AF37 0%, #BA9244 100%);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(186, 146, 68, 0.35);
+}
+
+.reward-exchange-btn.can-exchange:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 4px rgba(186, 146, 68, 0.4);
+}
+
+.reward-exchange-btn.locked {
+  background: #E8E3D8;
+  color: #A8A095;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Bottom Navigation Bar
+   ========================================================================== */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-around;
+  padding: 6px 16px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 12px));
+  z-index: 20;
+}
+
+.nav-tab-btn {
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 16px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.nav-tab-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+  transition: var(--transition);
+}
+
+.nav-tab-btn span {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.nav-tab-btn.active {
+  color: #B58A38;
+}
+
+.nav-tab-btn.active svg {
+  transform: scale(1.1);
+  stroke: #B58A38;
+}
+
+/* ==========================================================================
+   3. Stamp Celebration Overlay (演出画面)
+   ========================================================================== */
+.celebration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(247, 245, 238, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.celebration-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#confetti-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1001;
+}
+
+.celebration-card {
+  position: relative;
+  z-index: 1002;
+  text-align: center;
+  padding: 30px 24px;
+  max-width: 340px;
+}
+
+.celebration-title-en {
+  font-family: var(--font-script);
+  font-size: 46px;
+  color: #C5A059;
+  line-height: 1;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 10px rgba(197, 160, 89, 0.25);
+  animation: popIn 0.5s ease backwards;
+}
+
+.celebration-title-ja {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.08em;
+  margin-bottom: 24px;
+  animation: popIn 0.5s 0.1s ease backwards;
+}
+
+.celebration-stamp-box {
+  width: 130px;
+  height: 130px;
+  margin: 0 auto 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.celebration-stamp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(230, 57, 70, 0.4));
+  animation: celebrationStamp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.15s backwards;
+}
+
+@keyframes celebrationStamp {
+  0% {
+    transform: scale(3) rotate(-25deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.85) rotate(5deg);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(1.1) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.celebration-plus-one {
+  font-family: var(--font-en);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-stamp-red);
+  letter-spacing: 0.02em;
+  margin-bottom: 20px;
+  animation: popIn 0.5s 0.3s ease backwards;
+}
+
+.celebration-auto-return {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  animation: fadeIn 0.5s 0.5s ease backwards;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ==========================================================================
+   4. Modals (History, QR Scanner, Reward Exchange, Admin Settings)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 500;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-sheet {
+  width: 100%;
+  max-width: 440px;
+  background: #FFFFFF;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 12px));
+  max-height: 85svh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-overlay.show .modal-sheet {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-close-btn {
+  background: #F3EFE6;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* 履歴リスト */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  padding: 10px 12px;
+  background: #FAF8F3;
+  border-radius: var(--radius-sm);
+  border: 1px solid #ECE7DC;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-item-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.history-item-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.history-item-badge {
+  font-size: 12px;
+  font-weight: 800;
+  font-family: var(--font-en);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.history-item-badge.plus {
+  background: #FEE8EA;
+  color: var(--color-stamp-red);
+}
+
+.history-item-badge.minus {
+  background: #E8EEF5;
+  color: #2B6CB0;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 30px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* カメラQRスキャナー用 */
+.qr-reader-container {
+  width: 100%;
+  max-width: 320px;
+  height: 240px;
+  margin: 0 auto;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #000;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#qr-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.qr-scan-guide-box {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.qr-scan-guide-box.detected {
+  border-color: #2ECC71;
+  box-shadow: 0 0 16px #2ECC71, 0 0 0 9999px rgba(0, 0, 0, 0.4);
+}
+
+.qr-laser-line {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #E63946, transparent);
+  box-shadow: 0 0 6px #E63946;
+  position: absolute;
+  top: 0;
+  animation: laserScan 2s linear infinite;
+}
+
+@keyframes laserScan {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+.qr-scan-guide {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+/* 管理・テストメニュー */
+.admin-tools-card {
+  margin-top: 20px;
+  padding: 14px;
+  background: #F5EFE6;
+  border-radius: var(--radius-md);
+  border: 1px dashed #D4C3A3;
+}
+
+.admin-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: 8px;
+}
+
+.admin-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-btn {
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border: 1px solid #D4C3A3;
+  background: #FFFFFF;
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.admin-btn.danger {
+  color: var(--color-stamp-red);
+  border-color: #F8C3C7;
+}
+
+/* 交換ダイアログ */
+.exchange-confirm-body {
+  text-align: center;
+  padding: 10px 0 20px;
+}
+
+.exchange-reward-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  overflow: hidden;
+  border: 2px solid var(--border-gold);
+}
+
+.exchange-reward-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.exchange-confirm-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.exchange-confirm-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.exchange-action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 12px;
+  background: #EFEBE4;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 12px;
+  background: var(--color-primary-gold);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(186, 146, 68, 0.35);
+}
+
+/* 音声トグルボタン */
+.sound-toggle-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  z-index: 20;
+}
+
+/* ==========================================================================
+   管理者用 歯車ボタン (Admin Gear Button)
+   ========================================================================== */
+.admin-gear-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  z-index: 20;
+}
+
+/* ==========================================================================
+   管理者パスワードモーダル (Admin Password Modal)
+   ========================================================================== */
+.admin-pw-body {
+  padding: 8px 0 16px;
+  text-align: center;
+}
+
+.admin-pw-desc {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.admin-pw-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 20px;
+  font-family: var(--font-en);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-align: center;
+  border: 2px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  background: #FAF8F3;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s ease;
+  -webkit-appearance: none;
+}
+
+.admin-pw-input:focus {
+  border-color: var(--color-primary);
+}
+
+.admin-pw-error {
+  font-size: 12.5px;
+  color: var(--color-stamp-red);
+  font-weight: 700;
+  margin-top: 8px;
+  animation: pwShake 0.3s ease;
+}
+
+@keyframes pwShake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-6px); }
+  75%      { transform: translateX(6px); }
+}
+
+/* ==========================================================================
+   オープニング スプラッシュ画面 (Opening Splash Screen)
+   ========================================================================== */
+.app-splash-screen {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  background: var(--bg-main);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.5s ease;
+}
+
+.app-splash-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-splash-screen.hidden {
+  display: none;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.splash-logo-glow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(197, 160, 89, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.splash-ball-icon {
+  width: 90px;
+  height: 90px;
+  opacity: 0;
+  transform: scale(0.7);
+  animation: splashBallIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  filter: drop-shadow(0 8px 24px rgba(197, 160, 89, 0.35));
+  position: relative;
+  z-index: 1;
+}
+
+.splash-app-title {
+  font-family: var(--font-en);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--text-main);
+  text-indent: 0.2em;
+  opacity: 0;
+  animation: splashFadeUp 0.5s ease 0.75s forwards;
+  margin-top: 14px;
+}
+
+.splash-app-subtitle {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  opacity: 0;
+  animation: splashFadeUp 0.5s ease 0.9s forwards;
+  margin-top: 4px;
+}
+
+.splash-skip-hint {
+  position: absolute;
+  bottom: calc(36px + env(safe-area-inset-bottom, 0px));
+  font-size: 11px;
+  color: var(--text-light);
+  opacity: 0;
+  animation: splashFadeUp 0.5s ease 1.0s forwards;
+  letter-spacing: 0.08em;
+}
+
+@keyframes splashBallIn {
+  0%   { opacity: 0; transform: scale(0.7) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes splashFadeUp {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   リワードカード・チケット — SVGアイコン対応
+   ========================================================================== */
+
+/* リワードカードのthumb をSVGアイコン表示に */
+.reward-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FAF4E8 0%, #F2E8D0 100%);
+  border: 1.5px solid #EDE0C0;
+}
+
+.reward-card-icon svg {
+  width: 32px;
+  height: 32px;
+  stroke: #C5A059;
+}
+
+/* チケットthumb SVGアイコン */
+.ticket-icon-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FAF4E8 0%, #F2E8D0 100%);
+  border: 1.5px solid #EDE0C0;
+}
+
+.ticket-icon-thumb svg {
+  width: 26px;
+  height: 26px;
+  stroke: #C5A059;
+}
+
+/* リワード交換確認モーダル — SVGアイコンプレビュー */
+.reward-icon-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FAF4E8 0%, #F2E8D0 100%);
+  border: 2px solid #EDE0C0;
+}
+
+.reward-icon-preview svg {
+  width: 46px;
+  height: 46px;
+  stroke: #C5A059;
+}
+
+/* ==========================================================================
+   抽選ページ (Lottery View)
+   ========================================================================== */
+
+.lottery-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lottery-empty {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.lottery-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lottery-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #F0EBF8 0%, #E4D8F0 100%);
+  border: 1.5px solid #D8C8EC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lottery-card-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: #8B62C4;
+}
+
+.lottery-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.lottery-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lottery-deadline {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.lottery-deadline.expired {
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+.lottery-link-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #9B59B6 0%, #7D3C98 100%);
+  color: #FFFFFF;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(125, 60, 152, 0.3);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.lottery-link-btn:active {
+  filter: brightness(0.85);
+  transform: scale(0.93);
+}
+
+.lottery-link-btn.expired {
+  background: #E8E3D8;
+  color: #A8A095;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   管理モーダル内スタイル
+   ========================================================================== */
+
+.admin-section {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.admin-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.admin-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+/* リワード編集行 */
+.admin-reward-edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-reward-row {
+  background: #FAF8F3;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+/* 抽選管理行 */
+.admin-lottery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-lottery-row {
+  background: #FAF8F3;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-lottery-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-lottery-row-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-lottery-row-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.admin-lottery-row-btns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* フォーム共通 */
+.admin-form-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.admin-form-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.admin-form-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: var(--font-base);
+  border: 1.5px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s ease;
+  -webkit-appearance: none;
+}
+
+.admin-form-input:focus {
+  border-color: var(--color-primary);
+}
+
+/* ==========================================================================
+   リワード獲得エフェクト（豪華版）
+   ========================================================================== */
+
+.reward-celebration-overlay {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  background: rgba(20, 10, 35, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.reward-celebration-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#reward-confetti-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1101;
+}
+
+.reward-cel-card {
+  position: relative;
+  z-index: 1102;
+  text-align: center;
+  padding: 32px 28px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.reward-cel-crown {
+  font-size: 40px;
+  line-height: 1;
+  animation: rewardCrownPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes rewardCrownPop {
+  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+  70%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.reward-cel-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  animation: rewardFadeUp 0.45s ease 0.15s both;
+}
+
+.reward-cel-title {
+  font-family: var(--font-en);
+  font-size: 24px;
+  font-weight: 800;
+  color: #F4D675;
+  text-shadow: 0 2px 16px rgba(212, 175, 55, 0.5);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  animation: rewardFadeUp 0.45s ease 0.25s both;
+  word-break: break-all;
+}
+
+.reward-cel-trophy {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F4D675 0%, #C5A059 50%, #9E7D3B 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), 0 8px 24px rgba(0,0,0,0.3);
+  animation: rewardTrophyIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s both;
+  margin: 6px 0;
+}
+
+.reward-cel-trophy svg {
+  width: 52px;
+  height: 52px;
+  stroke: #FFFFFF;
+  stroke-width: 1.5;
+}
+
+@keyframes rewardTrophyIn {
+  0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+  65%  { transform: scale(1.12) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.reward-cel-skip {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.08em;
+  margin-top: 8px;
+  animation: rewardFadeUp 0.45s ease 0.6s both;
+}
+
+@keyframes rewardFadeUp {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   リワードランク別アイコンカラー
+   bronze(3) → silver(5) → gold(7) → platinum(10)
+   ========================================================================== */
+
+/* 銅 — ブロンズ */
+.reward-rank-bronze {
+  background: linear-gradient(135deg, #FDF0E6 0%, #F3DEC4 100%);
+  border-color: #E0B98A !important;
+}
+.reward-rank-bronze svg {
+  stroke: #A0622A;
+}
+
+/* 銀 — シルバー */
+.reward-rank-silver {
+  background: linear-gradient(135deg, #F4F4F6 0%, #E2E4EA 100%);
+  border-color: #B8BDC8 !important;
+}
+.reward-rank-silver svg {
+  stroke: #6B7280;
+}
+
+/* 金 — ゴールド */
+.reward-rank-gold {
+  background: linear-gradient(135deg, #FDF8E1 0%, #F5E49A 100%);
+  border-color: #D4AF37 !important;
+}
+.reward-rank-gold svg {
+  stroke: #B8860B;
+}
+
+/* 王冠 — プラチナ/クラウン */
+.reward-rank-platinum {
+  background: linear-gradient(135deg, #EDE8F5 0%, #D8CCEE 100%);
+  border-color: #9B7ED4 !important;
+}
+.reward-rank-platinum svg {
+  stroke: #6B3FA0;
+}
+
+/* 豪華エフェクトのトロフィーもランクカラーに上書き */
+.reward-cel-trophy.reward-rank-bronze {
+  background: linear-gradient(135deg, #F5CBA7 0%, #A0622A 100%);
+  box-shadow: 0 0 40px rgba(160, 98, 42, 0.5), 0 8px 24px rgba(0,0,0,0.3);
+}
+.reward-cel-trophy.reward-rank-silver {
+  background: linear-gradient(135deg, #E8EAF0 0%, #6B7280 100%);
+  box-shadow: 0 0 40px rgba(107, 114, 128, 0.5), 0 8px 24px rgba(0,0,0,0.3);
+}
+.reward-cel-trophy.reward-rank-gold {
+  background: linear-gradient(135deg, #F4D675 0%, #C5A059 50%, #9E7D3B 100%);
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), 0 8px 24px rgba(0,0,0,0.3);
+}
+.reward-cel-trophy.reward-rank-platinum {
+  background: linear-gradient(135deg, #C9B8E8 0%, #7B52C8 50%, #4A1FA8 100%);
+  box-shadow: 0 0 40px rgba(155, 126, 212, 0.6), 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* Supabase管理者ログイン */
+.admin-login-fields {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.admin-login-status {
+  min-height: 18px;
+  margin-top: 6px;
+  color: #B24747;
+  font-size: 12px;
+}
+
+.admin-login-status.is-success {
+  color: #278A52;
+}
+
+/* オフライン状態表示 */
+.offline-status {
+  position: fixed;
+  z-index: 200;
+  top: max(8px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  padding: 9px 12px;
+  border: 1px solid #DFCDB2;
+  border-radius: var(--radius-sm);
+  background: #FFF8E8;
+  box-shadow: 0 4px 12px rgba(83, 63, 35, 0.14);
+  color: #795D2F;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* ==========================================================================
+   抽選機能強化 v4.0 — ステータス管理・セクション展開
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   抽選ページヘッダー（タイトル + 応募履歴ボタン）
+   -------------------------------------------------------------------------- */
+
+.lottery-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
+.lottery-history-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-gold);
+  background: #FAF8F3;
+  color: var(--color-primary-dark);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-base);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.lottery-history-link-btn:active {
+  background: var(--color-primary-light);
+  transform: scale(0.94);
+}
+
+/* --------------------------------------------------------------------------
+   抽選セクション（折りたたみ）
+   -------------------------------------------------------------------------- */
+
+.lottery-section {
+  margin-bottom: 8px;
+}
+
+.lottery-section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-light);
+  background: var(--bg-card);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: var(--transition);
+  font-family: var(--font-base);
+  text-align: left;
+}
+
+.lottery-section-header:active {
+  background: #F4F0E8;
+}
+
+.lottery-section-title {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.lottery-section-count {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: #F0EBE0;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.lottery-section-arrow {
+  font-size: 16px;
+  color: var(--text-light);
+  transition: transform 0.25s ease;
+  display: inline-block;
+  line-height: 1;
+  transform: rotate(90deg); /* 閉じた状態: 右向き→下向き */
+}
+
+.lottery-section-header.open .lottery-section-arrow {
+  transform: rotate(270deg); /* 開いた状態: 上向き */
+}
+
+.lottery-section-body {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.25s ease;
+  opacity: 0;
+  padding: 0 0;
+}
+
+.lottery-section-body.open {
+  max-height: 2000px; /* 十分大きな値 */
+  opacity: 1;
+  padding: 8px 0 4px;
+}
+
+.lottery-empty-sub {
+  text-align: center;
+  padding: 16px 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+/* --------------------------------------------------------------------------
+   抽選カード（新構造：縦2段）
+   -------------------------------------------------------------------------- */
+
+/* 新カード構造。既存の横並びlottery-cardを上書き */
+.lottery-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ステータス別カードの左ボーダーカラー */
+.lottery-card--won {
+  border-left: 3px solid #F0A500;
+  background: linear-gradient(135deg, #FFFBF0 0%, #FFFFFF 40%);
+}
+
+.lottery-card--applied {
+  border-left: 3px solid #4CAF50;
+}
+
+.lottery-card--pending {
+  border-left: 3px solid var(--border-gold);
+}
+
+.lottery-card--lost {
+  border-left: 3px solid #CCC;
+  opacity: 0.8;
+}
+
+.lottery-card--paid {
+  border-left: 3px solid #9B59B6;
+  opacity: 0.8;
+}
+
+/* カード上段：タイトル + 応募ボタン */
+.lottery-card-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lottery-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.lottery-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lottery-deadline {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.lottery-deadline.expired {
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+/* 応募するボタン（旧 lottery-link-btn を置き換え） */
+.lottery-apply-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #9B59B6 0%, #7D3C98 100%);
+  color: #FFFFFF;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(125, 60, 152, 0.3);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.lottery-apply-btn:active {
+  filter: brightness(0.85);
+  transform: scale(0.93);
+}
+
+/* --------------------------------------------------------------------------
+   ステータス行（カード下段）
+   -------------------------------------------------------------------------- */
+
+.lottery-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lottery-status-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lottery-status-pills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.lottery-status-pill {
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-base);
+  border: 1.5px solid transparent;
+  background: #F0EBE0;
+  color: var(--text-muted);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.lottery-status-pill:active {
+  transform: scale(0.92);
+}
+
+/* 非アクティブ時のhover（iPhone Safariでは不要だが念のため） */
+.lottery-status-pill:not(.active):active {
+  background: #E8E0D0;
+}
+
+/* アクティブ状態（各ステータスカラー） */
+.lottery-status-pill.active.pill-pending {
+  background: #F0EBE0;
+  border-color: var(--border-gold);
+  color: var(--color-primary-dark);
+}
+
+.lottery-status-pill.active.pill-applied {
+  background: #E8F5E9;
+  border-color: #66BB6A;
+  color: #2E7D32;
+}
+
+.lottery-status-pill.active.pill-won {
+  background: #FFF8E1;
+  border-color: #F0A500;
+  color: #B7790A;
+  box-shadow: 0 1px 6px rgba(240, 165, 0, 0.25);
+}
+
+.lottery-status-pill.active.pill-lost {
+  background: #F5F5F5;
+  border-color: #BDBDBD;
+  color: #757575;
+}
+
+.lottery-status-pill.active.pill-paid {
+  background: #F3E5F5;
+  border-color: #AB47BC;
+  color: #7B1FA2;
+}
+
+/* --------------------------------------------------------------------------
+   管理モーダル内の抽選行ステータス列
+   -------------------------------------------------------------------------- */
+
+.admin-lottery-row {
+  flex-wrap: wrap; /* ステータスselectが入るので折り返しを許可 */
+}
+
+.admin-lottery-row-status {
+  flex-shrink: 0;
+}
+
+.admin-status-select {
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: var(--font-base);
+  border: 1.5px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  color: var(--text-main);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A8A095'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   応募履歴モーダル内のバッジ（ステータス別カラー）
+   -------------------------------------------------------------------------- */
+
+.lottery-history-item .history-item-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lottery-history-item .status-won {
+  background: #FFF8E1;
+  color: #B7790A;
+  border: 1.5px solid #F0A500;
+}
+
+.lottery-history-item .status-lost {
+  background: #F5F5F5;
+  color: #757575;
+  border: 1.5px solid #BDBDBD;
+}
+
+.lottery-history-item .status-paid {
+  background: #F3E5F5;
+  color: #7B1FA2;
+  border: 1.5px solid #AB47BC;
+}
+
+.lottery-history-item .status-applied {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1.5px solid #66BB6A;
+}
+
+.lottery-history-item .status-pending {
+  background: #F0EBE0;
+  color: var(--color-primary-dark);
+  border: 1.5px solid var(--border-gold);
+}
+
+/* --------------------------------------------------------------------------
+   Ver 3.2.0: 10pt周回・ポイント消費機能スタイル
+   -------------------------------------------------------------------------- */
+.stamp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.stamp-card-header .stamp-card-ribbon {
+  margin-bottom: 0;
+}
+
+.completion-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #B7790A;
+  background: #FFF8E1;
+  border: 1px solid #F0A500;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.total-points-badge {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.total-points-badge strong {
+  color: var(--color-stamp-red);
+  font-family: var(--font-en);
+}
+
+/* ポイントを使うカード */
+.consume-points-card {
+  background: #FAF8F3;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.consume-points-header {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.consume-points-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.consume-points-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.consume-amount-select {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: 1px solid #DFCDB2;
+  border-radius: var(--radius-sm);
+  background: #FFF;
+  color: var(--text-main);
+  outline: none;
+}
+
+.consume-points-btn {
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #FFF;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(166, 126, 68, 0.25);
+  white-space: nowrap;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.consume-points-btn:active {
+  transform: scale(0.98);
+}
+
+.consume-points-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>POKECARD - はるか専用デジタルポイントカード</title>
+  <meta name="description" content="はるか専用のデジタルポイントカード。ポケモンカードの当選でスタンプを貯めて豪華特典と交換しよう！">
+
+  <!-- PWA & Mobile Meta Tags -->
+  <meta name="theme-color" content="#F7F5EE">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="POKECARD">
+  <link rel="apple-touch-icon" href="images/icons/app-icon.svg">
+  <link rel="icon" type="image/svg+xml" href="images/icons/app-icon.svg">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden>
+    オフラインです。保存済みデータを表示しています（操作は接続後に行ってください）。
+  </div>
+
+  <!-- ================= 0. オープニング画面（スプラッシュ演出 2秒） ================= -->
+  <div id="app-splash-screen" class="app-splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo-glow"></div>
+      <img src="images/icons/logo-ball.svg" alt="PokeCard Symbol" class="splash-ball-icon">
+      <h1 class="splash-app-title">POKECARD</h1>
+      <p class="splash-app-subtitle">はるか専用デジタルポイントカード</p>
+    </div>
+    <div class="splash-skip-hint">タップでスキップ</div>
+  </div>
+
+  <div id="app-container">
+    <!-- 背景モンスターボール透かし -->
+    <div class="bg-watermark-top-right"></div>
+    <div class="bg-watermark-bottom-left"></div>
+
+    <!-- 左上: 管理者用 歯車設定ボタン -->
+    <button id="admin-gear-btn" class="admin-gear-btn" title="管理者設定" aria-label="管理者設定">
+      <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+
+    <!-- 右上: 音声ミュート切り替えボタン -->
+    <button id="sound-toggle-btn" class="sound-toggle-btn" title="効果音のON/OFF" aria-label="効果音のON/OFF">
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+    </button>
+
+    <!-- ヘッダー -->
+    <header class="app-header">
+      <img src="images/icons/logo-ball.svg" alt="PokeCard Logo" class="header-logo-icon">
+      <h1 class="app-title">POKECARD</h1>
+      <p class="app-subtitle">はるか専用デジタルポイントカード</p>
+    </header>
+
+    <!-- メインビューコンテナ -->
+    <main class="view-container">
+      
+      <!-- ================= 1. ホーム画面 ================= -->
+      <section id="view-home" class="view-page active">
+        <!-- スタンプカード -->
+        <div class="stamp-card-wrapper">
+          <div class="stamp-card-header">
+            <div class="stamp-card-ribbon">スタンプカード</div>
+            <div id="completion-badge" class="completion-badge" style="display: none;">🎉 完成カード: <span id="completion-count">0</span>枚</div>
+          </div>
+          
+          <!-- 10マスグリッド (2行×5列) -->
+          <div id="stamp-grid" class="stamp-grid">
+            <!-- JSで動的生成 -->
+          </div>
+
+          <!-- スタンプ数・累計ポイント表示 -->
+          <div class="stamp-count-display">
+            <span id="stamp-current-count" class="stamp-count-current">0</span>
+            <span class="stamp-count-divider">/</span>
+            <span class="stamp-count-total">10</span>
+            <span>スタンプ</span>
+            <span class="total-points-badge">（累計 <strong id="total-points-count">0</strong> pt）</span>
+          </div>
+        </div>
+
+        <!-- ポイントを使用するカード -->
+        <div id="consume-points-card" class="consume-points-card">
+          <div class="consume-points-header">
+            <span>✨</span> ポイントを使う
+          </div>
+          <p class="consume-points-desc">ポイントを選択して使用できます</p>
+          <div class="consume-points-form">
+            <select id="consume-amount-select" class="consume-amount-select">
+              <option value="1">1 pt 使用</option>
+              <option value="2">2 pt 使用</option>
+              <option value="3">3 pt 使用</option>
+              <option value="4">4 pt 使用</option>
+              <option value="5">5 pt 使用</option>
+              <option value="6">6 pt 使用</option>
+              <option value="7">7 pt 使用</option>
+              <option value="8">8 pt 使用</option>
+              <option value="9">9 pt 使用</option>
+              <option value="10">10 pt 使用</option>
+            </select>
+            <button id="consume-points-btn" class="consume-points-btn" type="button">ポイントを使用する</button>
+          </div>
+        </div>
+
+        <!-- 保有中の特典チケットエリア（チケットがある時のみ表示） -->
+        <div id="active-tickets-section" class="active-tickets-section" style="display: none;">
+          <div class="tickets-section-title">
+            <span>🎟️</span> 獲得した特典チケット
+          </div>
+          <div id="active-tickets-list" class="active-tickets-list">
+            <!-- JSで動的生成 -->
+          </div>
+        </div>
+
+        <!-- QR案内バナー -->
+        <button id="qr-banner-btn" class="qr-banner-btn" type="button">
+          <div class="qr-icon-box">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </div>
+          <div class="qr-banner-text">
+            QRコードを読み込むと<br>スタンプが1つもらえます
+          </div>
+          <div class="qr-arrow">›</div>
+        </button>
+
+        <!-- ポイント履歴リンク -->
+        <button id="history-link-btn" class="history-link-btn" type="button">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>ポイント履歴を見る ›</span>
+        </button>
+
+        <!-- バージョン識別表示 -->
+        <div class="version-badge-container">
+          <span class="version-badge">Ver 3.2.0 (ポイント化・10pt周回制)</span>
+        </div>
+      </section>
+
+      <!-- ================= 2. リワード画面 (非表示) ================= -->
+      <section id="view-rewards" class="view-page" style="display: none;">
+        <div class="reward-header-box">
+          <h2 class="reward-main-title">🎁 リワード一覧</h2>
+          <p class="reward-sub-desc">スタンプを使って特典と交換しよう！</p>
+        </div>
+
+        <div id="reward-card-list" class="reward-card-list">
+          <!-- JSで動的生成 -->
+        </div>
+      </section>
+
+      <!-- ================= 3. 抽選画面 ================= -->
+      <section id="view-lottery" class="view-page">
+        <div class="lottery-page-header">
+          <div>
+            <h2 class="reward-main-title">🎰 ポケカ抽選</h2>
+            <p class="reward-sub-desc">抽選の応募状況を管理しよう！</p>
+          </div>
+          <button id="lottery-history-btn" class="lottery-history-link-btn" type="button">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            応募履歴
+          </button>
+        </div>
+        <div id="lottery-card-list" class="lottery-card-list">
+          <!-- JSで動的生成 -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- 下部タブナビゲーション -->
+    <nav class="bottom-nav" aria-label="メインナビゲーション">
+      <button class="nav-tab-btn active" data-tab="home" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>ホーム</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="lottery" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>抽選</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ================= 3. スタンプ獲得演出オーバーレイ ================= -->
+  <div id="celebration-overlay" class="celebration-overlay" aria-hidden="true">
+    <canvas id="confetti-canvas"></canvas>
+    <div class="celebration-card">
+      <div class="celebration-title-en">Congratulations!</div>
+      <div class="celebration-title-ja">スタンプGET！</div>
+      <div class="celebration-stamp-box">
+        <img src="images/icons/stamp-red.svg" alt="GET Stamp" class="celebration-stamp-img">
+      </div>
+      <div class="celebration-plus-one">+1</div>
+      <div class="celebration-auto-return">ホームに戻ります...</div>
+    </div>
+  </div>
+
+  <!-- ================= 4. ポイント履歴 & 管理モーダル ================= -->
+  <div id="history-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📜</span> ポイント獲得・交換履歴
+        </div>
+        <button class="modal-close-btn modal-close-trigger" aria-label="閉じる">✕</button>
+      </div>
+      
+      <div id="history-items-list" class="history-list">
+        <!-- JSで動的生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 5. リワード交換確認モーダル ================= -->
+  <div id="exchange-confirm-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">🎁 リワード交換の確認</div>
+        <button class="modal-close-btn modal-close-trigger" aria-label="閉じる">✕</button>
+      </div>
+      <div class="exchange-confirm-body">
+        <div id="exchange-preview-icon-wrap" class="exchange-reward-preview reward-icon-preview reward-rank-bronze">
+          <svg id="exchange-preview-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M9 9h1.5a1.5 1.5 0 0 1 0 3H9v3h3"></path>
+            <path d="M15 9v6"></path>
+          </svg>
+        </div>
+        <div id="exchange-reward-title" class="exchange-confirm-title">映画デートと交換しますか？</div>
+        <p id="exchange-reward-desc" class="exchange-confirm-desc">スタンプを3個消費して特典と交換します。</p>
+        <div class="exchange-action-buttons">
+          <button class="btn-secondary modal-close-trigger" type="button">キャンセル</button>
+          <button id="confirm-exchange-btn" class="btn-primary" type="button">交換する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 5.5 特典チケット使用確認モーダル ================= -->
+  <div id="use-ticket-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">🎟️ 特典チケットを使う</div>
+        <button class="modal-close-btn modal-close-trigger" aria-label="閉じる">✕</button>
+      </div>
+      <div class="exchange-confirm-body">
+        <div class="exchange-reward-preview reward-icon-preview">
+          <svg id="use-ticket-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="6"></circle>
+            <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+          </svg>
+        </div>
+        <div id="use-ticket-title" class="exchange-confirm-title">「映画デート」を使用しますか？</div>
+        <p id="use-ticket-desc" class="exchange-confirm-desc">「使用する」を押すとこのチケットを消費し、履歴に使用記録が残ります。</p>
+        <div class="exchange-action-buttons">
+          <button class="btn-secondary modal-close-trigger" type="button">やめる</button>
+          <button id="confirm-use-ticket-btn" class="btn-primary" style="background: linear-gradient(135deg, #E63946 0%, #C9182B 100%); box-shadow: 0 4px 12px rgba(230, 57, 70, 0.35);" type="button">使用する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 6. カメラQRスキャナーモーダル ================= -->
+  <div id="qr-scan-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">📷 QRコード読み取り</div>
+        <button class="modal-close-btn modal-close-trigger" aria-label="閉じる">✕</button>
+      </div>
+      <div id="qr-reader-container" class="qr-reader-container">
+        <video id="qr-video" playsinline></video>
+        <!-- スキャン枠 & レーザーライン -->
+        <div id="qr-scan-guide-box" class="qr-scan-guide-box">
+          <div class="qr-laser-line"></div>
+        </div>
+      </div>
+      <p class="qr-scan-guide">カメラで当選用QRコードをかざしてください</p>
+      
+      <!-- 画像ファイルから読み取りボタン -->
+      <div style="text-align: center; margin-top: 10px;">
+        <label for="qr-file-input" style="display: inline-block; font-size: 12px; color: #A67E44; background: #FAF5EB; border: 1px dashed #DFCDB2; padding: 6px 14px; border-radius: 20px; cursor: pointer;">
+          🖼️ QR画像・スクショから読み取る
+        </label>
+        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+      </div>
+
+      <div id="qr-camera-error" style="display: none; text-align:center; padding: 10px; color: #8C827A; font-size: 12px;">
+        カメラにアクセスできませんでした。<br>iPhoneの標準カメラアプリでQRを読み込むと自動でスタンプが付与されます！
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 7.5. 管理者パスワード入力モーダル ================= -->
+  <div id="admin-password-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          管理＆テストモード
+        </div>
+        <button class="modal-close-btn" id="admin-pw-close-btn" aria-label="閉じる">✕</button>
+      </div>
+      <div class="admin-pw-body">
+        <p class="admin-pw-desc">パスワードを入力してください</p>
+        <input type="password" id="admin-pw-input" class="admin-pw-input" placeholder="パスワード" inputmode="numeric" maxlength="20" autocomplete="off">
+        <div id="admin-pw-error" class="admin-pw-error" style="display:none;">パスワードが違います</div>
+        <div class="exchange-action-buttons" style="margin-top:14px;">
+          <button class="btn-secondary" id="admin-pw-cancel-btn" type="button">キャンセル</button>
+          <button class="btn-primary" id="admin-pw-confirm-btn" type="button">確認</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 7. 当選QRコード表示モーダル（パートナー用） ================= -->
+  <div id="partner-qr-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">🎁 当選スタンプQR</div>
+        <button class="modal-close-btn modal-close-trigger" aria-label="閉じる">✕</button>
+      </div>
+      <div style="text-align: center; padding: 10px 0;">
+        <p style="font-size: 12.5px; color: #8C847B; margin-bottom: 12px;">
+          このQRコードをはるかさんのスマホカメラで読み取ると、スタンプが+1されます！
+        </p>
+        <div style="width: 180px; height: 180px; margin: 0 auto; background: #fff; padding: 8px; border: 1px solid #EAE5DA; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+          <img id="partner-qr-img" src="" alt="QR Code" style="width: 100%; height: 100%;">
+        </div>
+        <div style="margin-top: 14px;">
+          <input id="partner-qr-link" type="text" readonly style="width: 100%; padding: 8px 10px; border: 1px solid #DFCDB2; border-radius: 8px; font-size: 11px; background: #FAF8F3; color: #666; margin-bottom: 8px;">
+          <button id="copy-qr-link-btn" class="btn-primary" style="width: 100%; font-size: 13px;" type="button">当選リンクをコピー（LINE送信など）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8. 管理モーダル（歯車からのみアクセス） ================= -->
+  <div id="admin-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">🛠️ 管理＆テストモード</div>
+        <button class="modal-close-btn" id="admin-modal-close-btn" aria-label="閉じる">✕</button>
+      </div>
+
+      <!-- Supabase管理者ログイン -->
+      <div class="admin-section">
+        <div class="admin-section-title">Supabase管理者ログイン</div>
+        <div class="admin-login-fields">
+          <input type="email" id="admin-login-email" class="admin-form-input" placeholder="メールアドレス" autocomplete="username">
+          <input type="password" id="admin-login-password" class="admin-form-input" placeholder="Supabaseパスワード" autocomplete="current-password">
+        </div>
+        <button id="admin-login-btn" class="admin-btn" type="button">管理者ログイン</button>
+        <div id="admin-login-status" class="admin-login-status" aria-live="polite"></div>
+      </div>
+
+      <!-- スタンプ操作 -->
+      <div class="admin-section">
+        <div class="admin-section-title">スタンプ操作</div>
+        <div class="admin-btn-group">
+          <button id="admin-add-stamp-btn" class="admin-btn" type="button">＋1 スタンプ付与</button>
+          <button id="admin-full-stamp-btn" class="admin-btn" type="button">満杯（10個）設定</button>
+          <button id="admin-generate-qr-btn" class="admin-btn" type="button">📲 当選QR発行</button>
+          <button id="admin-update-app-btn" class="admin-btn" style="color:#A67E44;border-color:#DFCDB2;" type="button">🔄 アプリ最新版に更新</button>
+          <button id="admin-reset-btn" class="admin-btn danger" type="button">初期化リセット</button>
+        </div>
+      </div>
+
+      <!-- リワード編集 -->
+      <div class="admin-section">
+        <div class="admin-section-title">リワード編集</div>
+        <div id="admin-reward-edit-list" class="admin-reward-edit-list">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <!-- 抽選管理 -->
+      <div class="admin-section">
+        <div class="admin-section-title">抽選管理</div>
+        <div id="admin-lottery-list" class="admin-lottery-list">
+          <!-- JSで動的生成 -->
+        </div>
+        <button id="admin-add-lottery-btn" class="admin-btn" style="width:100%;margin-top:8px;" type="button">＋ 抽選を追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8.5. 応募履歴モーダル ================= -->
+  <div id="lottery-history-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          応募履歴
+        </div>
+        <button class="modal-close-btn modal-close-trigger" aria-label="閉じる">✕</button>
+      </div>
+      <div id="lottery-history-list" class="history-list">
+        <!-- JSで動的生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8.6. 抽選追加・編集モーダル ================= -->
+  <div id="lottery-edit-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title" id="lottery-edit-modal-title">抽選を追加</div>
+        <button class="modal-close-btn" id="lottery-edit-close-btn" aria-label="閉じる">✕</button>
+      </div>
+      <div style="padding: 4px 0 12px;">
+        <input type="hidden" id="lottery-edit-id">
+        <div class="admin-form-group">
+          <label class="admin-form-label">タイトル</label>
+          <input type="text" id="lottery-edit-title" class="admin-form-input" placeholder="例：ポケカ151 抽選">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">URL</label>
+          <input type="url" id="lottery-edit-url" class="admin-form-input" placeholder="https://...">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">締切日</label>
+          <input type="date" id="lottery-edit-deadline" class="admin-form-input">
+        </div>
+        <div class="exchange-action-buttons" style="margin-top:14px;">
+          <button class="btn-secondary" id="lottery-edit-cancel-btn" type="button">キャンセル</button>
+          <button class="btn-primary" id="lottery-edit-save-btn" type="button">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 9. リワード獲得エフェクト（豪華版） ================= -->
+  <div id="reward-celebration-overlay" class="reward-celebration-overlay" aria-hidden="true">
+    <canvas id="reward-confetti-canvas"></canvas>
+    <div class="reward-cel-card">
+      <div class="reward-cel-crown">👑</div>
+      <div class="reward-cel-label">特典チケット獲得！</div>
+      <div class="reward-cel-title"></div>
+      <div class="reward-cel-trophy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="6"></circle>
+          <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+        </svg>
+      </div>
+      <div class="reward-cel-skip">タップでスキップ</div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/jsQR.min.js"></script>
+  <script>
+    // jsQRのロード確認 & CDNフォールバック
+    if (typeof jsQR === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+      document.head.appendChild(script);
+    }
+  </script>
+  <script src="js/storage.js"></script>
+  <script src="js/stamp.js"></script>
+  <script src="js/qr.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
