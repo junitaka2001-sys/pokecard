@@ -368,8 +368,8 @@ async function renderStampCard(justStamped = false) {
   const grid = document.getElementById('stamp-grid');
   if (!grid) return;
 
-  // 10pt周回計算: 10pt時点はカード満杯 (10/10)、11ptで周回数1 (1/10)
-  const completedCards = totalPoints > 0 ? Math.floor((totalPoints - 1) / 10) : 0;
+  // 10pt周回計算: 10pt達成で完成カード1枚 (10/10 満杯)、11ptで2枚目開始 (1/10)
+  const completedCards = Math.floor(totalPoints / 10);
   const currentStamps = totalPoints > 0 && totalPoints % 10 === 0 ? 10 : (totalPoints % 10);
 
   grid.innerHTML = '';
