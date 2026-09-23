@@ -55,6 +55,9 @@ async function initApp() {
     window.qrManager.checkUrlParamsOnLoad();
   }
 
+  // 初回起動時のチュートリアル表示チェック
+  checkTutorialFirstLaunch();
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').then((reg) => {
@@ -136,6 +139,17 @@ function setupEventListeners() {
         alert(res.message || 'ポイントの消費に失敗しました');
       }
     });
+  }
+
+  // 使い方チュートリアルボタン
+  const tutorialOpenBtn = document.getElementById('tutorial-open-btn');
+  if (tutorialOpenBtn) {
+    tutorialOpenBtn.addEventListener('click', () => openTutorialModal());
+  }
+
+  const tutorialStartBtn = document.getElementById('tutorial-start-btn');
+  if (tutorialStartBtn) {
+    tutorialStartBtn.addEventListener('click', () => closeTutorialModal());
   }
 
   // モーダル閉じるボタン（.modal-close-trigger）
@@ -795,6 +809,32 @@ function executeTicketUse() {
   }, 480);
 
   selectedTicketForUse = null;
+}
+
+/**
+ * チュートリアルモーダルを開く
+ */
+function openTutorialModal() {
+  const modal = document.getElementById('tutorial-modal');
+  if (modal) modal.classList.add('show');
+}
+
+/**
+ * チュートリアルモーダルを閉じる（初回起動フラグ保存）
+ */
+function closeTutorialModal() {
+  const modal = document.getElementById('tutorial-modal');
+  if (modal) modal.classList.remove('show');
+  localStorage.setItem('pokecard_tutorial_seen_v1', 'true');
+}
+
+/**
+ * 初回起動時のチュートリアル表示チェック
+ */
+function checkTutorialFirstLaunch() {
+  if (!localStorage.getItem('pokecard_tutorial_seen_v1')) {
+    openTutorialModal();
+  }
 }
 
 /**

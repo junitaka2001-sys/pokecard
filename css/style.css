@@ -2396,3 +2396,82 @@ button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* --------------------------------------------------------------------------
+   チュートリアルモーダル スタイル
+   -------------------------------------------------------------------------- */
+.home-action-links {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.tutorial-link-btn {
+  background: #FFF8E1 !important;
+  color: #B7790A !important;
+  border: 1px solid #F0A500 !important;
+}
+
+.tutorial-sheet {
+  max-height: 85dvh;
+}
+
+.tutorial-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0 12px;
+}
+
+.tutorial-card {
+  background: #FAF8F3;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.tutorial-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tutorial-icon {
+  font-size: 16px;
+}
+
+.tutorial-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.tutorial-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+.tutorial-list li {
+  margin-bottom: 4px;
+}
+
+.tutorial-highlight {
+  font-weight: 700;
+  color: var(--color-stamp-red);
+  background: #FEE8EA;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.tutorial-start-btn {
+  width: 100%;
+  margin-top: 8px;
+  font-size: 14px;
+  padding: 12px;
+}
