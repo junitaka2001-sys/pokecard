@@ -1218,16 +1218,20 @@ function setupAdminControls() {
   const fullBtn = document.getElementById('admin-full-stamp-btn');
   if (fullBtn) {
     fullBtn.addEventListener('click', async () => {
-      window.storageManager.setStamps(10);
-      window.storageManager.addHistoryItem({
-        id: 'hist-' + Date.now(),
-        type: 'stamp_add',
-        title: 'テスト（10個満杯設定）',
-        amount: 10,
-        date: new Date().toISOString()
-      });
-      await renderApp();
-      alert('スタンプを10個に設定しました！');
+      const res = await window.storageManager.addStamp(10);
+      if (res.success) {
+        window.storageManager.addHistoryItem({
+          id: 'hist-' + Date.now(),
+          type: 'stamp_add',
+          title: '管理者：10ポイント付与',
+          amount: 10,
+          date: new Date().toISOString()
+        });
+        await renderApp(true);
+        alert('10ポイントを付与しました！');
+      } else {
+        alert(res.message);
+      }
     });
   }
 
