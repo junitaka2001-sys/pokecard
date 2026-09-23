@@ -98,29 +98,29 @@ class StorageManager {
   }
 
   async getStampAngles() {
-    if (window.supabaseClient && window.currentUserId) {
-      try {
-        const { data, error } = await window.supabaseClient
-          .from('stamp_cards')
-          .select('stamp_angles')
-          .eq('user_id', this.operationUserId)
-          .maybeSingle();
-
-        if (!error && data && data.stamp_angles) {
-          localStorage.setItem(STORAGE_KEYS.STAMP_ANGLES, JSON.stringify(data.stamp_angles));
-          return data.stamp_angles;
-        }
-      } catch (e) {
-        console.warn('Supabase getStampAngles error, falling back to localStorage:', e);
-      }
-    }
-
+    // キャッシュファースト：localStorageの値を即座に返す
+    let cached = null;
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.STAMP_ANGLES);
-      return data ? JSON.parse(data) : [0,0,0,0,0,0,0,0,0,0];
-    } catch {
-      return [0,0,0,0,0,0,0,0,0,0];
+      const raw = localStorage.getItem(STORAGE_KEYS.STAMP_ANGLES);
+      if (raw) cached = JSON.parse(raw);
+    } catch {}
+
+    // バックグラウンドでSupabaseと同期（次回描画に反映。待ちは発生しない）
+    if (window.supabaseClient && window.currentUserId) {
+      window.supabaseClient
+        .from('stamp_cards')
+        .select('stamp_angles')
+        .eq('user_id', this.operationUserId)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (!error && data && data.stamp_angles) {
+            localStorage.setItem(STORAGE_KEYS.STAMP_ANGLES, JSON.stringify(data.stamp_angles));
+          }
+        })
+        .catch(() => {});
     }
+
+    return cached ?? [0,0,0,0,0,0,0,0,0,0];
   }
 
   // スタンプ（ポイント）数
