@@ -55,9 +55,6 @@ async function initApp() {
     window.qrManager.checkUrlParamsOnLoad();
   }
 
-  // 初回起動時のチュートリアル表示チェック
-  checkTutorialFirstLaunch();
-
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').then((reg) => {
@@ -316,14 +313,17 @@ async function switchTab(tabName) {
 }
 
 /**
- * 全体の描画
+ * 全体の描画（アクティブなタブのみ並列描画し高速化）
  */
 async function renderApp(justStamped = false) {
-  await renderStampCard(justStamped);
-  await renderNextReward();
-  await renderActiveTickets();
-  await renderRewardList();
-  await renderLotteryList();
+  if (currentTab === 'lottery') {
+    await renderLotteryList();
+  } else {
+    await Promise.all([
+      renderStampCard(justStamped),
+      renderActiveTickets()
+    ]);
+  }
 }
 
 window.renderApp = renderApp;
