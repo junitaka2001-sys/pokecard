@@ -2475,3 +2475,41 @@ button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
   font-size: 14px;
   padding: 12px;
 }
+
+/* --------------------------------------------------------------------------
+   ロックマンエグゼ風 クリアスター（周回スター）スタイル
+   -------------------------------------------------------------------------- */
+.completion-stars-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  max-width: 60%;
+  justify-content: flex-end;
+}
+
+.clear-star-svg {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: starPopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.clear-star-svg:active {
+  transform: scale(1.25) rotate(10deg);
+}
+
+@keyframes starPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-30deg);
+  }
+  70% {
+    transform: scale(1.25) rotate(10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}

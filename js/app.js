@@ -373,6 +373,41 @@ function getRewardRank(requiredStamps) {
   }
 }
 
+/* ============================================================
+   ロックマンエグゼ風 クリアスター（周回スター）カラー定義
+   ============================================================ */
+const MEGAMAN_STAR_COLORS = [
+  { main: '#FFD700', stop1: '#FFF9B3', stop2: '#FF8800', stroke: '#B37700' }, // 1. ゴールド/イエロー
+  { main: '#00FF55', stop1: '#B3FFCC', stop2: '#009933', stroke: '#006622' }, // 2. エメラルドグリーン
+  { main: '#0099FF', stop1: '#B3E6FF', stop2: '#0044CC', stroke: '#002B80' }, // 3. サファイアブルー
+  { main: '#FF00CC', stop1: '#FFB3F2', stop2: '#990099', stroke: '#660066' }, // 4. マゼンタ/ピンク
+  { main: '#FF3333', stop1: '#FFB3B3', stop2: '#B30000', stroke: '#800000' }, // 5. ルビーレッド
+  { main: '#A600FF', stop1: '#E6B3FF', stop2: '#5900B3', stroke: '#3D0080' }, // 6. アメジストパープル
+  { main: '#00FFFF', stop1: '#CCFFFF', stop2: '#009999', stroke: '#006666' }, // 7. シアン/アクア
+  { main: '#FF6600', stop1: '#FFD6B3', stop2: '#B33600', stroke: '#802600' }  // 8. フレアオレンジ
+];
+
+/**
+ * ロックマン風 立体クリアスターのSVGを生成する
+ */
+function createMegaManStarSvg(index) {
+  const color = MEGAMAN_STAR_COLORS[index % MEGAMAN_STAR_COLORS.length];
+  const gradId = `star-grad-${index}-${Math.random().toString(36).substr(2, 4)}`;
+
+  return `
+    <svg class="clear-star-svg" viewBox="0 0 24 24" fill="url(#${gradId})" stroke="${color.stroke}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+      <defs>
+        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${color.stop1}" />
+          <stop offset="45%" stop-color="${color.main}" />
+          <stop offset="100%" stop-color="${color.stop2}" />
+        </linearGradient>
+      </defs>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  `;
+}
+
 /**
  * 1. スタンプカードの描画
  */
@@ -419,15 +454,12 @@ async function renderStampCard(justStamped = false) {
   const totalPointsEl = document.getElementById('total-points-count');
   if (totalPointsEl) totalPointsEl.textContent = totalPoints;
 
-  // 周回数バッジ表示
-  const badgeEl = document.getElementById('completion-badge');
-  const countEl = document.getElementById('completion-count');
-  if (badgeEl && countEl) {
-    if (completedCards > 0) {
-      countEl.textContent = completedCards;
-      badgeEl.style.display = 'inline-block';
-    } else {
-      badgeEl.style.display = 'none';
+  // ロックマン風クリアスター（周回ごとに色の違う星）を描画
+  const starsContainer = document.getElementById('completion-stars-container');
+  if (starsContainer) {
+    starsContainer.innerHTML = '';
+    for (let i = 0; i < completedCards; i++) {
+      starsContainer.insertAdjacentHTML('beforeend', createMegaManStarSvg(i));
     }
   }
 }

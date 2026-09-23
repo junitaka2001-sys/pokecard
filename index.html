@@ -72,7 +72,10 @@
         <div class="stamp-card-wrapper">
           <div class="stamp-card-header">
             <div class="stamp-card-ribbon">スタンプカード</div>
-            <div id="completion-badge" class="completion-badge" style="display: none;">🎉 完成カード: <span id="completion-count">0</span>枚</div>
+            <!-- ロックマン風クリアスター（周回ごとに色の違う星が並ぶ） -->
+            <div id="completion-stars-container" class="completion-stars-container">
+              <!-- JSで動的生成 -->
+            </div>
           </div>
           
           <!-- 10マスグリッド (2行×5列) -->
@@ -158,7 +161,7 @@
 
         <!-- バージョン識別表示 -->
         <div class="version-badge-container">
-          <span class="version-badge">Ver 3.3.2 (ガイド文面更新)</span>
+          <span class="version-badge">Ver 3.4.0 (クリアスター追加)</span>
         </div>
       </section>
 
