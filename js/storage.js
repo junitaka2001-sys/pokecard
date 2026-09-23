@@ -125,26 +125,25 @@ class StorageManager {
 
   // スタンプ（ポイント）数
   async getStamps() {
-    if (window.supabaseClient && window.currentUserId) {
-      try {
-        const { data, error } = await window.supabaseClient
-          .from('stamp_cards')
-          .select('stamps')
-          .eq('user_id', this.operationUserId)
-          .maybeSingle();
+    // キャッシュファースト：localStorageの値を即座に返す
+    const cached = parseInt(localStorage.getItem(STORAGE_KEYS.STAMPS), 10);
 
-        if (!error && data && typeof data.stamps === 'number') {
-          const safeCount = Math.max(0, data.stamps);
-          localStorage.setItem(STORAGE_KEYS.STAMPS, safeCount.toString());
-          return safeCount;
-        }
-      } catch (e) {
-        console.warn('Supabase getStamps error, falling back to localStorage:', e);
-      }
+    // バックグラウンドでSupabaseと同期（次回描画に反映。待ちは発生しない）
+    if (window.supabaseClient && window.currentUserId) {
+      window.supabaseClient
+        .from('stamp_cards')
+        .select('stamps')
+        .eq('user_id', this.operationUserId)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (!error && data && typeof data.stamps === 'number') {
+            localStorage.setItem(STORAGE_KEYS.STAMPS, Math.max(0, data.stamps).toString());
+          }
+        })
+        .catch(() => {});
     }
 
-    const val = parseInt(localStorage.getItem(STORAGE_KEYS.STAMPS), 10);
-    return isNaN(val) ? 0 : Math.max(0, val);
+    return isNaN(cached) ? 0 : Math.max(0, cached);
   }
 
   setStamps(count) {
