@@ -283,6 +283,7 @@ function setupEventListeners() {
   }
 
   setupAdminControls();
+  setupMemoEventListeners();
 }
 
 /**
@@ -318,6 +319,8 @@ async function switchTab(tabName) {
 async function renderApp(justStamped = false) {
   if (currentTab === 'lottery') {
     await renderLotteryList();
+  } else if (currentTab === 'memo') {
+    await renderMemoTimeline();
   } else {
     await Promise.all([
       renderStampCard(justStamped),
@@ -584,13 +587,18 @@ async function renderRewardList() {
 const LOTTERY_STATUS_CONFIG = {
   pending: { label: '未完了',   color: 'status-pending',  icon: '○' },
   applied: { label: '応募済',   color: 'status-applied',  icon: '✓' },
+  stamped: { label: 'スタンプ済', color: 'status-stamped',  icon: '🎟️' },
+  paid:    { label: '支払済',   color: 'status-paid',     icon: '💰' },
   won:     { label: '当選！',   color: 'status-won',      icon: '★' },
-  lost:    { label: '落選',     color: 'status-lost',     icon: '✕' },
-  paid:    { label: '支払済',   color: 'status-paid',     icon: '💰' }
+  lost:    { label: '落選',     color: 'status-lost',     icon: '✕' }
 };
 
-// ステータス変更の遷移順（タップで次のステータスへ）
-const STATUS_CYCLE = ['pending', 'applied', 'won', 'lost', 'paid'];
+// 全ステータス一覧（管理画面セレクト等用）
+const STATUS_CYCLE = ['pending', 'applied', 'stamped', 'won', 'lost', 'paid'];
+// 結果ステータス（大きめ配置）
+const STATUS_RESULT = ['won', 'lost'];
+// 進行ステータス
+const STATUS_PROCESS = ['pending', 'applied', 'stamped', 'paid'];
 
 /** 抽選カードの期限文字列を生成 */
 function buildDeadlineHtml(lot) {
@@ -621,18 +629,36 @@ function buildLotteryCard(lot) {
         応募する ›
       </a>
     </div>
-    <div class="lottery-status-row">
-      <span class="lottery-status-label">ステータス:</span>
-      <div class="lottery-status-pills" role="group" aria-label="ステータス変更">
-        ${STATUS_CYCLE.map(s => {
-          const sc = LOTTERY_STATUS_CONFIG[s];
-          return `<button
-            class="lottery-status-pill ${s === lot.status ? 'active' : ''} pill-${s}"
-            data-status="${s}"
-            type="button"
-            aria-pressed="${s === lot.status ? 'true' : 'false'}"
-          >${sc.icon} ${sc.label}</button>`;
-        }).join('')}
+    <div class="lottery-status-block">
+      <!-- 結果ステータス（大きめ配置） -->
+      <div class="lottery-status-row lottery-status-row--result">
+        <span class="lottery-status-label">結果:</span>
+        <div class="lottery-status-pills lottery-status-pills--result" role="group" aria-label="当落結果">
+          ${STATUS_RESULT.map(s => {
+            const sc = LOTTERY_STATUS_CONFIG[s];
+            return `<button
+              class="lottery-status-pill lottery-status-pill--result ${s === lot.status ? 'active' : ''} pill-${s}"
+              data-status="${s}"
+              type="button"
+              aria-pressed="${s === lot.status ? 'true' : 'false'}"
+            >${sc.icon} ${sc.label}</button>`;
+          }).join('')}
+        </div>
+      </div>
+      <!-- 状況ステータス -->
+      <div class="lottery-status-row lottery-status-row--process">
+        <span class="lottery-status-label">状況:</span>
+        <div class="lottery-status-pills" role="group" aria-label="進行状況">
+          ${STATUS_PROCESS.map(s => {
+            const sc = LOTTERY_STATUS_CONFIG[s];
+            return `<button
+              class="lottery-status-pill ${s === lot.status ? 'active' : ''} pill-${s}"
+              data-status="${s}"
+              type="button"
+              aria-pressed="${s === lot.status ? 'true' : 'false'}"
+            >${sc.icon} ${sc.label}</button>`;
+          }).join('')}
+        </div>
       </div>
     </div>
   `;
@@ -645,13 +671,7 @@ function buildLotteryCard(lot) {
       const ok = await window.storageManager.setLotteryStatus(lot.id, newStatus);
       if (ok) {
         lot.status = newStatus;
-        // カードを再構築して置き換え
-        const newCard = buildLotteryCard(lot);
-        card.replaceWith(newCard);
-        // 当選・落選・支払済への変更はセクション再描画が必要
-        if (['won', 'lost', 'paid', 'pending'].includes(newStatus)) {
-          await renderLotteryList();
-        }
+        await renderLotteryList();
       } else {
         alert('ステータスの更新に失敗しました。通信状態を確認してください。');
       }
@@ -699,7 +719,7 @@ function buildLotterySection(sectionId, title, lots, defaultOpen = true) {
 
 /**
  * 4. 抽選一覧の描画（3セクション構成）
- *   セクション1: 当選  (status = 'won')
+ *   セクション1: 当選  (status = 'won' | 'stamped')
  *   セクション2: 進行中 (status = 'pending' | 'applied')
  *   セクション3: 応募履歴 (status = 'lost' | 'paid') ← 折りたたみ、デフォルト閉じ
  */
@@ -715,7 +735,7 @@ async function renderLotteryList() {
     return;
   }
 
-  const won     = lots.filter(l => l.status === 'won');
+  const won     = lots.filter(l => l.status === 'won' || l.status === 'stamped');
   const active  = lots.filter(l => l.status === 'pending' || l.status === 'applied');
   const history = lots.filter(l => l.status === 'lost' || l.status === 'paid');
 
@@ -1341,3 +1361,239 @@ async function openLotteryHistoryModal() {
     }
   });
 })();
+
+/* ============================================================
+   メモ機能（v3.5.0）
+   ============================================================ */
+
+/**
+ * 投稿者名を返す
+ * 管理者 → 「小室」、それ以外 → 「はるか」
+ */
+function getNoteAuthorName(noteUserId) {
+  const ADMIN_UUID = 'f267ca43-40c8-431e-ae5e-1d8c35153f56';
+  return noteUserId === ADMIN_UUID ? '小室' : 'はるか';
+}
+
+/**
+ * 日付文字列を「YYYY年M月D日」形式に変換
+ */
+function formatNoteDate(isoStr) {
+  const d = new Date(isoStr);
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+/**
+ * 時刻文字列を「H:MM」形式に変換
+ */
+function formatNoteTime(isoStr) {
+  const d = new Date(isoStr);
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/**
+ * メモ画面（タイムライン）を描画する
+ */
+async function renderMemoTimeline() {
+  const timeline = document.getElementById('memo-timeline');
+  if (!timeline) return;
+
+  const notes = await window.storageManager.getNotes();
+  timeline.innerHTML = '';
+
+  if (notes.length === 0) {
+    timeline.innerHTML = `
+      <div class="memo-empty">
+        <span class="memo-empty-icon">📝</span>
+        まだメモはありません。<br>最初のメモを送ってみよう！
+      </div>`;
+    return;
+  }
+
+  let lastDateLabel = '';
+
+  notes.forEach(note => {
+    const dateLabel = formatNoteDate(note.created_at);
+    const isEdited = note.updated_at && note.updated_at !== note.created_at;
+    const isMine = note.user_id === window.currentUserId;
+    const authorName = getNoteAuthorName(note.user_id);
+
+    // 日付が変わったらヘッダーを挿入
+    if (dateLabel !== lastDateLabel) {
+      lastDateLabel = dateLabel;
+      const header = document.createElement('div');
+      header.className = 'memo-date-header';
+      header.innerHTML = `<span class="memo-date-label">${dateLabel}</span>`;
+      timeline.appendChild(header);
+    }
+
+    // バブルラッパー
+    const wrap = document.createElement('div');
+    wrap.className = `memo-bubble-wrap${isMine ? ' mine' : ''}`;
+    wrap.dataset.noteId = note.id;
+
+    // メタ（投稿者・時刻・編集済み）
+    const meta = document.createElement('div');
+    meta.className = 'memo-bubble-meta';
+    meta.innerHTML = `
+      <span class="memo-author">${authorName}</span>
+      <span class="memo-time">${formatNoteTime(note.created_at)}</span>
+      ${isEdited ? '<span class="memo-edited-mark">（編集済み）</span>' : ''}
+    `;
+
+    // バブル本体
+    const bubble = document.createElement('div');
+    bubble.className = 'memo-bubble';
+    bubble.textContent = note.content;
+
+    wrap.appendChild(meta);
+    wrap.appendChild(bubble);
+
+    // 自分のメモのみ編集・削除ボタンを追加
+    if (isMine) {
+      const actions = document.createElement('div');
+      actions.className = 'memo-bubble-actions';
+      actions.innerHTML = `
+        <button class="memo-action-btn edit" type="button" data-note-id="${note.id}">編集</button>
+        <button class="memo-action-btn delete" type="button" data-note-id="${note.id}">削除</button>
+      `;
+      actions.querySelector('.edit').addEventListener('click', () => openNoteEditModal(note));
+      actions.querySelector('.delete').addEventListener('click', () => confirmDeleteNote(note.id));
+      wrap.appendChild(actions);
+    }
+
+    timeline.appendChild(wrap);
+  });
+
+  // 最新メモが見えるようにスクロール
+  timeline.scrollTop = timeline.scrollHeight;
+}
+
+/**
+ * メモ送信処理
+ */
+async function sendNote() {
+  const textarea = document.getElementById('memo-input-textarea');
+  const sendBtn = document.getElementById('memo-send-btn');
+  if (!textarea || !sendBtn) return;
+
+  const content = textarea.value.trim();
+  if (!content) return;
+
+  sendBtn.disabled = true;
+  textarea.disabled = true;
+
+  const res = await window.storageManager.addNote(content);
+
+  if (res.success) {
+    textarea.value = '';
+    textarea.style.height = 'auto';
+    await renderMemoTimeline();
+  } else {
+    alert(res.message || 'メモの送信に失敗しました');
+  }
+
+  sendBtn.disabled = false;
+  textarea.disabled = false;
+  textarea.focus();
+}
+
+/**
+ * メモ編集モーダルを開く
+ */
+function openNoteEditModal(note) {
+  const modal = document.getElementById('note-edit-modal');
+  const idInput = document.getElementById('note-edit-id');
+  const textarea = document.getElementById('note-edit-textarea');
+  if (!modal || !idInput || !textarea) return;
+
+  idInput.value = note.id;
+  textarea.value = note.content;
+  modal.classList.add('show');
+  setTimeout(() => textarea.focus(), 300);
+}
+
+/**
+ * メモ編集モーダルを閉じる
+ */
+function closeNoteEditModal() {
+  const modal = document.getElementById('note-edit-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+/**
+ * メモ編集を保存する
+ */
+async function saveNoteEdit() {
+  const id = document.getElementById('note-edit-id')?.value || '';
+  const content = document.getElementById('note-edit-textarea')?.value || '';
+  if (!id) return;
+
+  const res = await window.storageManager.updateNote(id, content);
+  if (res.success) {
+    closeNoteEditModal();
+    await renderMemoTimeline();
+  } else {
+    alert(res.message || '更新に失敗しました');
+  }
+}
+
+/**
+ * メモ削除の確認・実行
+ */
+async function confirmDeleteNote(id) {
+  if (!confirm('このメモを削除しますか？')) return;
+  const res = await window.storageManager.deleteNote(id);
+  if (res.success) {
+    await renderMemoTimeline();
+  } else {
+    alert(res.message || '削除に失敗しました');
+  }
+}
+
+/**
+ * メモ関連のイベントリスナーをまとめて設定する
+ */
+function setupMemoEventListeners() {
+  // 送信ボタン
+  const sendBtn = document.getElementById('memo-send-btn');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', () => sendNote());
+  }
+
+  // テキストエリアで Ctrl+Enter / Cmd+Enter でも送信
+  const textarea = document.getElementById('memo-input-textarea');
+  if (textarea) {
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        sendNote();
+      }
+    });
+
+    // 入力に合わせてテキストエリアの高さを自動調整
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    });
+  }
+
+  // 編集モーダルの閉じる / キャンセル
+  ['note-edit-close-btn', 'note-edit-cancel-btn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener('click', () => closeNoteEditModal());
+  });
+
+  const noteEditModal = document.getElementById('note-edit-modal');
+  if (noteEditModal) {
+    noteEditModal.addEventListener('click', (e) => {
+      if (e.target === noteEditModal) closeNoteEditModal();
+    });
+  }
+
+  // 編集モーダルの保存ボタン
+  const saveBtn = document.getElementById('note-edit-save-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => saveNoteEdit());
+  }
+}

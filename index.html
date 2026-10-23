@@ -161,7 +161,7 @@
 
         <!-- バージョン識別表示 -->
         <div class="version-badge-container">
-          <span class="version-badge">Ver 3.4.1 (10ポイント付与ボタン)</span>
+          <span class="version-badge">Ver 3.5.0 (抽選ステータス拡張＆ガイド更新)</span>
         </div>
       </section>
 
@@ -177,7 +177,37 @@
         </div>
       </section>
 
-      <!-- ================= 3. 抽選画面 ================= -->
+      <!-- ================= 3. メモ画面 ================= -->
+      <section id="view-memo" class="view-page memo-view">
+        <div class="memo-page-header">
+          <h2 class="reward-main-title">📝 メモ</h2>
+          <p class="reward-sub-desc">はるかと小室のふたりだけのメモ帳</p>
+        </div>
+
+        <!-- メモタイムライン（スクロール領域） -->
+        <div id="memo-timeline" class="memo-timeline">
+          <!-- JSで動的生成 -->
+        </div>
+
+        <!-- 下部固定の入力欄 -->
+        <div class="memo-input-bar">
+          <textarea
+            id="memo-input-textarea"
+            class="memo-input-textarea"
+            placeholder="メモを入力…"
+            rows="1"
+            maxlength="500"
+          ></textarea>
+          <button id="memo-send-btn" class="memo-send-btn" type="button" aria-label="送信">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= 4. 抽選画面 ================= -->
       <section id="view-lottery" class="view-page">
         <div class="lottery-page-header">
           <div>
@@ -207,6 +237,15 @@
           <polyline points="9 22 9 12 15 12 15 22"></polyline>
         </svg>
         <span>ホーム</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="memo" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span>メモ</span>
       </button>
       <button class="nav-tab-btn" data-tab="lottery" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -265,7 +304,12 @@
             <span class="tutorial-card-title">「抽選」画面の使い方</span>
           </div>
           <ul class="tutorial-list">
-            <li>📋 <strong>ポケカ抽選の応募管理:</strong> 各ショップの抽選応募状況（応募中・当選！・落選・支払済など）をまとめて簡単にチェックできます！</li>
+            <li>📋 <strong>応募から結果までカンタン管理:</strong> 気になる抽選に応募したら、ステータスボタンをタップして今の状態を記録できます♪</li>
+            <li>⚪ <strong>未完了:</strong> まだ応募していない抽選。忘れずにエントリーしよう！</li>
+            <li>🟢 <strong>応募済み:</strong> 応募完了！あとは当落結果をワクワク待つだけ✨</li>
+            <li>🎟️ <strong>スタンプ済:</strong> 見事当選してスタンプを受け取った状態！ポイントGETおめでとう🎉</li>
+            <li>💰 <strong>支払済:</strong> お店で商品を受け取ってお支払い完了！これでお買い物完了です🙌</li>
+            <li>🎉 <strong>当選！ / ✕ 落選:</strong> 結果が出たら大きめボタンでパッと切り替えられます！</li>
           </ul>
         </div>
 
@@ -462,6 +506,30 @@
           <!-- JSで動的生成 -->
         </div>
         <button id="admin-add-lottery-btn" class="admin-btn" style="width:100%;margin-top:8px;" type="button">＋ 抽選を追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8.4. メモ編集モーダル ================= -->
+  <div id="note-edit-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">✏️ メモを編集</div>
+        <button class="modal-close-btn" id="note-edit-close-btn" aria-label="閉じる">✕</button>
+      </div>
+      <div style="padding: 4px 0 12px;">
+        <input type="hidden" id="note-edit-id">
+        <textarea
+          id="note-edit-textarea"
+          class="memo-input-textarea note-edit-textarea"
+          placeholder="メモを入力…"
+          rows="4"
+          maxlength="500"
+        ></textarea>
+        <div class="exchange-action-buttons" style="margin-top: 14px;">
+          <button class="btn-secondary" id="note-edit-cancel-btn" type="button">キャンセル</button>
+          <button class="btn-primary" id="note-edit-save-btn" type="button">保存</button>
+        </div>
       </div>
     </div>
   </div>

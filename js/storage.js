@@ -732,7 +732,7 @@ class StorageManager {
   }
 
   // --- 抽選ステータス管理 ---
-  // status: 'pending' | 'applied' | 'won' | 'lost' | 'paid'
+  // status: 'pending' | 'applied' | 'stamped' | 'won' | 'lost' | 'paid'
 
   /**
    * 全抽選のステータスを取得する。
@@ -766,11 +766,11 @@ class StorageManager {
   /**
    * 指定抽選のステータスを更新する（なければ INSERT、あれば UPDATE）。
    * @param {string} lotteryId
-   * @param {string} status  'pending'|'applied'|'won'|'lost'|'paid'
+   * @param {string} status  'pending'|'applied'|'stamped'|'won'|'lost'|'paid'
    * @returns {boolean} 成功したら true
    */
   async setLotteryStatus(lotteryId, status) {
-    const VALID = ['pending', 'applied', 'won', 'lost', 'paid'];
+    const VALID = ['pending', 'applied', 'stamped', 'won', 'lost', 'paid'];
     if (!VALID.includes(status)) return false;
 
     // localStorage を先に更新（オフライン時のキャッシュ）
@@ -827,6 +827,150 @@ class StorageManager {
       ...lot,
       status: statuses[lot.id] || 'pending'
     }));
+  }
+
+  // --- メモ管理 ---
+
+  /**
+   * メモ一覧を取得する（古い順）
+   * @returns {Promise<Array<{id, user_id, content, created_at, updated_at}>>}
+   */
+  async getNotes() {
+    if (window.supabaseClient && window.currentUserId) {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('notes')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (!error && data) {
+          localStorage.setItem('pokecard_notes_v1', JSON.stringify(data));
+          return data;
+        }
+      } catch (e) {
+        console.warn('Supabase getNotes error, falling back to localStorage:', e);
+      }
+    }
+
+    try {
+      const raw = localStorage.getItem('pokecard_notes_v1');
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  }
+
+  /**
+   * メモを追加する
+   * @param {string} content
+   * @returns {Promise<{success: boolean, note?: object, message?: string}>}
+   */
+  async addNote(content) {
+    const trimmed = content.trim();
+    if (!trimmed) return { success: false, message: '内容を入力してください' };
+    if (!window.currentUserId) return { success: false, message: 'ログインが必要です' };
+
+    const note = {
+      id: 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      user_id: window.currentUserId,
+      content: trimmed,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // localStorageに先行保存
+    try {
+      const raw = localStorage.getItem('pokecard_notes_v1');
+      const notes = raw ? JSON.parse(raw) : [];
+      notes.push(note);
+      localStorage.setItem('pokecard_notes_v1', JSON.stringify(notes));
+    } catch (e) { console.warn('localStorage addNote error:', e); }
+
+    if (window.supabaseClient && window.currentUserId) {
+      const { error } = await window.supabaseClient
+        .from('notes')
+        .insert({
+          id: note.id,
+          user_id: note.user_id,
+          content: note.content,
+          created_at: note.created_at,
+          updated_at: note.updated_at
+        });
+
+      if (error) {
+        console.warn('Supabase addNote error:', error.message);
+        return { success: false, message: '送信に失敗しました。通信を確認してください。' };
+      }
+    }
+
+    return { success: true, note };
+  }
+
+  /**
+   * メモを更新する（自分のメモのみ）
+   * @param {string} id
+   * @param {string} content
+   * @returns {Promise<{success: boolean, message?: string}>}
+   */
+  async updateNote(id, content) {
+    const trimmed = content.trim();
+    if (!trimmed) return { success: false, message: '内容を入力してください' };
+
+    const now = new Date().toISOString();
+
+    // localStorageを先行更新
+    try {
+      const raw = localStorage.getItem('pokecard_notes_v1');
+      const notes = raw ? JSON.parse(raw) : [];
+      const idx = notes.findIndex(n => n.id === id);
+      if (idx !== -1) {
+        notes[idx].content = trimmed;
+        notes[idx].updated_at = now;
+        localStorage.setItem('pokecard_notes_v1', JSON.stringify(notes));
+      }
+    } catch (e) { console.warn('localStorage updateNote error:', e); }
+
+    if (window.supabaseClient && window.currentUserId) {
+      const { error } = await window.supabaseClient
+        .from('notes')
+        .update({ content: trimmed, updated_at: now })
+        .eq('id', id)
+        .eq('user_id', window.currentUserId);
+
+      if (error) {
+        console.warn('Supabase updateNote error:', error.message);
+        return { success: false, message: '更新に失敗しました。通信を確認してください。' };
+      }
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * メモを削除する（自分のメモのみ）
+   * @param {string} id
+   * @returns {Promise<{success: boolean, message?: string}>}
+   */
+  async deleteNote(id) {
+    // localStorageから先行削除
+    try {
+      const raw = localStorage.getItem('pokecard_notes_v1');
+      const notes = raw ? JSON.parse(raw) : [];
+      localStorage.setItem('pokecard_notes_v1', JSON.stringify(notes.filter(n => n.id !== id)));
+    } catch (e) { console.warn('localStorage deleteNote error:', e); }
+
+    if (window.supabaseClient && window.currentUserId) {
+      const { error } = await window.supabaseClient
+        .from('notes')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', window.currentUserId);
+
+      if (error) {
+        console.warn('Supabase deleteNote error:', error.message);
+        return { success: false, message: '削除に失敗しました。通信を確認してください。' };
+      }
+    }
+
+    return { success: true };
   }
 }
 

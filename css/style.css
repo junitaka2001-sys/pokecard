@@ -2513,3 +2513,294 @@ button.is-touched, [role="button"].is-touched, .next-reward-card.is-touched {
     transform: scale(1) rotate(0deg);
   }
 }
+
+/* --------------------------------------------------------------------------
+   メモ画面（v3.5.0）
+   -------------------------------------------------------------------------- */
+
+/* メモタブのページ全体レイアウト：入力バー分を下に確保 */
+.memo-view {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0 !important;
+}
+
+/* ページヘッダー */
+.memo-page-header {
+  flex-shrink: 0;
+  padding: 4px 16px 8px;
+}
+
+/* タイムライン：スクロール領域 */
+.memo-timeline {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 14px 12px;
+  overscroll-behavior: contain;
+}
+
+/* 日付区切りヘッダー */
+.memo-date-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 10px;
+}
+
+.memo-date-header::before,
+.memo-date-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-light);
+}
+
+.memo-date-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-en);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* メモバブル */
+.memo-bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  gap: 2px;
+}
+
+.memo-bubble-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.memo-author {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.memo-time {
+  font-size: 10.5px;
+  color: var(--text-light);
+  font-family: var(--font-en);
+}
+
+.memo-edited-mark {
+  font-size: 10px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* バブル本体 */
+.memo-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+  padding: 10px 12px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-main);
+  word-break: break-word;
+  white-space: pre-wrap;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  max-width: 88%;
+}
+
+/* 自分のバブルは右寄せ・ゴールドアクセント */
+.memo-bubble-wrap.mine {
+  align-items: flex-end;
+}
+
+.memo-bubble-wrap.mine .memo-bubble-meta {
+  flex-direction: row-reverse;
+}
+
+.memo-bubble-wrap.mine .memo-bubble {
+  background: linear-gradient(135deg, #FBF6EC 0%, #F5EDD8 100%);
+  border-color: var(--border-gold);
+  border-radius: var(--radius-md) 0 var(--radius-md) var(--radius-md);
+}
+
+/* アクションボタン（編集・削除）自分のメモのみ表示 */
+.memo-bubble-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 3px;
+  justify-content: flex-end;
+}
+
+.memo-action-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  touch-action: manipulation;
+  transition: color 0.15s, background 0.15s;
+}
+
+.memo-action-btn:active {
+  background: var(--border-light);
+  color: var(--text-main);
+}
+
+.memo-action-btn.delete {
+  color: #E09090;
+}
+
+.memo-action-btn.delete:active {
+  background: #FEE8EA;
+  color: var(--color-stamp-red);
+}
+
+/* 空状態 */
+.memo-empty {
+  text-align: center;
+  padding: 48px 20px 24px;
+  color: var(--text-light);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.memo-empty-icon {
+  font-size: 36px;
+  display: block;
+  margin-bottom: 8px;
+  opacity: 0.6;
+}
+
+/* --------------------------------------------------------------------------
+   メモ入力バー（画面下部固定）
+   -------------------------------------------------------------------------- */
+.memo-input-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-light);
+  box-shadow: 0 -2px 12px rgba(90, 75, 60, 0.06);
+}
+
+.memo-input-textarea {
+  flex: 1;
+  resize: none;
+  border: 1.5px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  font-family: var(--font-base);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-main);
+  background: var(--bg-main);
+  outline: none;
+  max-height: 120px;
+  overflow-y: auto;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+}
+
+.memo-input-textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.memo-input-textarea::placeholder {
+  color: var(--text-light);
+}
+
+/* 編集モーダル内テキストエリア */
+.note-edit-textarea {
+  width: 100%;
+  min-height: 100px;
+  max-height: 240px;
+  margin-top: 8px;
+}
+
+/* 送信ボタン */
+.memo-send-btn {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary-gold);
+  background: linear-gradient(135deg, #D4AF37 0%, #C5A059 50%, #A68035 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(197, 160, 89, 0.45);
+  touch-action: manipulation;
+  transition: var(--transition);
+}
+
+.memo-send-btn:active {
+  transform: scale(0.92);
+  box-shadow: 0 1px 4px rgba(197, 160, 89, 0.3);
+}
+
+.memo-send-btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Ver 3.5.0: 抽選ステータス拡張（スタンプ済追加 & 結果・状況の2段配置）
+   -------------------------------------------------------------------------- */
+
+.lottery-card--stamped {
+  border-left: 3px solid #0288D1;
+  background: linear-gradient(135deg, #F0F8FF 0%, #FFFFFF 40%);
+}
+
+.lottery-status-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(223, 205, 178, 0.4);
+}
+
+.lottery-status-row--result {
+  margin-bottom: 2px;
+}
+
+/* 当選・落選の大きめ配置 */
+.lottery-status-pill--result {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  min-width: 72px;
+  text-align: center;
+}
+
+/* スタンプ済のアクティブスタイル */
+.lottery-status-pill.active.pill-stamped {
+  background: #E1F5FE;
+  border-color: #0288D1;
+  color: #0277BD;
+  box-shadow: 0 1px 6px rgba(2, 136, 209, 0.25);
+}
+
+/* 履歴モーダル用バッジ */
+.lottery-history-item .status-stamped {
+  background: #E1F5FE;
+  color: #0277BD;
+  border: 1.5px solid #0288D1;
+}
+
